@@ -112,8 +112,6 @@ int main() {
   printf("LSM303AGR accelerometer           = 0x%X\r\n", id);
   acc_gyro->ReadID(&id);
   printf("LSM6DSL accelerometer & gyroscope = 0x%X\r\n", id);
-  
-  wait(3);
  
   while(1) {
     printf("\r\n");
