@@ -55,7 +55,7 @@
  * Abstract class of an LSM303AGR Inertial Measurement Unit (IMU) 6 axes
  * sensor.
  */
-class LSM303AGR_MAG_Sensor
+class LSM303AGR_MAG_Sensor : public MagneticSensor
 {
   public:
     LSM303AGR_MAG_Sensor(DevI2C &i2c);
