@@ -54,57 +54,6 @@
 LSM6DSLSensor::LSM6DSLSensor(DevI2C &i2c) : dev_i2c(i2c)
 {
   address = LSM6DSL_ACC_GYRO_I2C_ADDRESS_HIGH; 
-
-  /* Enable register address automatically incremented during a multiple byte
-     access with a serial interface. */
-  if ( LSM6DSL_ACC_GYRO_W_IF_Addr_Incr( (void *)this, LSM6DSL_ACC_GYRO_IF_INC_ENABLED ) == MEMS_ERROR )
-  {
-    return;
-  }
-  
-  /* Enable BDU */
-  if ( LSM6DSL_ACC_GYRO_W_BDU( (void *)this, LSM6DSL_ACC_GYRO_BDU_BLOCK_UPDATE ) == MEMS_ERROR )
-  {
-    return;
-  }
-  
-  /* FIFO mode selection */
-  if ( LSM6DSL_ACC_GYRO_W_FIFO_MODE( (void *)this, LSM6DSL_ACC_GYRO_FIFO_MODE_BYPASS ) == MEMS_ERROR )
-  {
-    return;
-  }
-  
-  /* Output data rate selection - power down. */
-  if ( LSM6DSL_ACC_GYRO_W_ODR_XL( (void *)this, LSM6DSL_ACC_GYRO_ODR_XL_POWER_DOWN ) == MEMS_ERROR )
-  {
-    return;
-  }
-  
-  /* Full scale selection. */
-  if ( Set_X_FS( 2.0f ) == LSM6DSL_STATUS_ERROR )
-  {
-    return;
-  }
-
-  /* Output data rate selection - power down */
-  if ( LSM6DSL_ACC_GYRO_W_ODR_G( (void *)this, LSM6DSL_ACC_GYRO_ODR_G_POWER_DOWN ) == MEMS_ERROR )
-  {
-    return;
-  }
-
-  /* Full scale selection. */
-  if ( Set_G_FS( 2000.0f ) == LSM6DSL_STATUS_ERROR )
-  {
-    return;
-  }
-  
-  X_Last_ODR = 104.0f;
-
-  X_isEnabled = 0;
-  
-  G_Last_ODR = 104.0f;
-
-  G_isEnabled = 0;
 };
 
 /** Constructor
@@ -112,48 +61,58 @@ LSM6DSLSensor::LSM6DSLSensor(DevI2C &i2c) : dev_i2c(i2c)
  * @param address the address of the component's instance
  */
 LSM6DSLSensor::LSM6DSLSensor(DevI2C &i2c, uint8_t address) : dev_i2c(i2c), address(address)
-{ 
+{
+
+};
+
+/**
+ * @brief     Initializing the component.
+ * @param[in] init pointer to device specific initalization structure.
+ * @retval    "0" in case of success, an error code otherwise.
+ */
+int LSM6DSLSensor::Init(void *init)
+{
   /* Enable register address automatically incremented during a multiple byte
      access with a serial interface. */
   if ( LSM6DSL_ACC_GYRO_W_IF_Addr_Incr( (void *)this, LSM6DSL_ACC_GYRO_IF_INC_ENABLED ) == MEMS_ERROR )
   {
-    return;
+    return 1;
   }
   
   /* Enable BDU */
   if ( LSM6DSL_ACC_GYRO_W_BDU( (void *)this, LSM6DSL_ACC_GYRO_BDU_BLOCK_UPDATE ) == MEMS_ERROR )
   {
-    return;
+    return 1;
   }
   
   /* FIFO mode selection */
   if ( LSM6DSL_ACC_GYRO_W_FIFO_MODE( (void *)this, LSM6DSL_ACC_GYRO_FIFO_MODE_BYPASS ) == MEMS_ERROR )
   {
-    return;
+    return 1;
   }
   
   /* Output data rate selection - power down. */
   if ( LSM6DSL_ACC_GYRO_W_ODR_XL( (void *)this, LSM6DSL_ACC_GYRO_ODR_XL_POWER_DOWN ) == MEMS_ERROR )
   {
-    return;
+    return 1;
   }
   
   /* Full scale selection. */
-  if ( Set_X_FS( 2.0f ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_X_FS( 2.0f ) == 1 )
   {
-    return;
+    return 1;
   }
 
   /* Output data rate selection - power down */
   if ( LSM6DSL_ACC_GYRO_W_ODR_G( (void *)this, LSM6DSL_ACC_GYRO_ODR_G_POWER_DOWN ) == MEMS_ERROR )
   {
-    return;
+    return 1;
   }
 
   /* Full scale selection. */
-  if ( Set_G_FS( 2000.0f ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_G_FS( 2000.0f ) == 1 )
   {
-    return;
+    return 1;
   }
   
   X_Last_ODR = 104.0f;
@@ -163,153 +122,155 @@ LSM6DSLSensor::LSM6DSLSensor(DevI2C &i2c, uint8_t address) : dev_i2c(i2c), addre
   G_Last_ODR = 104.0f;
 
   G_isEnabled = 0;
-};
+  
+  return 0;
+}
 
 /**
  * @brief  Enable LSM6DSL Accelerator
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Enable_X(void)
+int LSM6DSLSensor::Enable_X(void)
 { 
   /* Check if the component is already enabled */
   if ( X_isEnabled == 1 )
   {
-    return LSM6DSL_STATUS_OK;
+    return 0;
   }
   
   /* Output data rate selection. */
-  if ( Set_X_ODR_When_Enabled( X_Last_ODR ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_X_ODR_When_Enabled( X_Last_ODR ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   X_isEnabled = 1;
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Enable LSM6DSL Gyroscope
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Enable_G(void)
+int LSM6DSLSensor::Enable_G(void)
 { 
   /* Check if the component is already enabled */
   if ( G_isEnabled == 1 )
   {
-    return LSM6DSL_STATUS_OK;
+    return 0;
   }
   
   /* Output data rate selection. */
-  if ( Set_G_ODR_When_Enabled( G_Last_ODR ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_G_ODR_When_Enabled( G_Last_ODR ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   G_isEnabled = 1;
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Disable LSM6DSL Accelerator
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Disable_X(void)
+int LSM6DSLSensor::Disable_X(void)
 { 
   /* Check if the component is already disabled */
   if ( X_isEnabled == 0 )
   {
-    return LSM6DSL_STATUS_OK;
+    return 0;
   }
   
   /* Store actual output data rate. */
-  if ( Get_X_ODR( &X_Last_ODR ) == LSM6DSL_STATUS_ERROR )
+  if ( Get_X_ODR( &X_Last_ODR ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Output data rate selection - power down. */
   if ( LSM6DSL_ACC_GYRO_W_ODR_XL( (void *)this, LSM6DSL_ACC_GYRO_ODR_XL_POWER_DOWN ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   X_isEnabled = 0;
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Disable LSM6DSL Gyroscope
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Disable_G(void)
+int LSM6DSLSensor::Disable_G(void)
 { 
   /* Check if the component is already disabled */
   if ( G_isEnabled == 0 )
   {
-    return LSM6DSL_STATUS_OK;
+    return 0;
   }
   
   /* Store actual output data rate. */
-  if ( Get_G_ODR( &G_Last_ODR ) == LSM6DSL_STATUS_ERROR )
+  if ( Get_G_ODR( &G_Last_ODR ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Output data rate selection - power down */
   if ( LSM6DSL_ACC_GYRO_W_ODR_G( (void *)this, LSM6DSL_ACC_GYRO_ODR_G_POWER_DOWN ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   G_isEnabled = 0;
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read ID of LSM6DSL Accelerometer and Gyroscope
  * @param  p_id the pointer where the ID of the device is stored
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::ReadID(uint8_t *p_id)
+int LSM6DSLSensor::ReadID(uint8_t *id)
 {
-  if(!p_id)
+  if(!id)
   { 
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
 
   /* Read WHO AM I register */
-  if ( LSM6DSL_ACC_GYRO_R_WHO_AM_I( (void *)this, p_id ) == MEMS_ERROR )
+  if ( LSM6DSL_ACC_GYRO_R_WHO_AM_I( (void *)this, id ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read data from LSM6DSL Accelerometer
  * @param  pData the pointer where the accelerometer data are stored
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_X_Axes(int32_t *pData)
+int LSM6DSLSensor::Get_X_Axes(int32_t *pData)
 {
   int16_t dataRaw[3];
   float sensitivity = 0;
   
   /* Read raw data from LSM6DSL output register. */
-  if ( Get_X_AxesRaw( dataRaw ) == LSM6DSL_STATUS_ERROR )
+  if ( Get_X_AxesRaw( dataRaw ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Get LSM6DSL actual sensitivity. */
-  if ( Get_X_Sensitivity( &sensitivity ) == LSM6DSL_STATUS_ERROR )
+  if ( Get_X_Sensitivity( &sensitivity ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Calculate the data. */
@@ -317,29 +278,29 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_X_Axes(int32_t *pData)
   pData[1] = ( int32_t )( dataRaw[1] * sensitivity );
   pData[2] = ( int32_t )( dataRaw[2] * sensitivity );
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read data from LSM6DSL Gyroscope
  * @param  pData the pointer where the gyroscope data are stored
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_G_Axes(int32_t *pData)
+int LSM6DSLSensor::Get_G_Axes(int32_t *pData)
 {
   int16_t dataRaw[3];
   float sensitivity = 0;
   
   /* Read raw data from LSM6DSL output register. */
-  if ( Get_G_AxesRaw( dataRaw ) == LSM6DSL_STATUS_ERROR )
+  if ( Get_G_AxesRaw( dataRaw ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Get LSM6DSL actual sensitivity. */
-  if ( Get_G_Sensitivity( &sensitivity ) == LSM6DSL_STATUS_ERROR )
+  if ( Get_G_Sensitivity( &sensitivity ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Calculate the data. */
@@ -347,22 +308,22 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_G_Axes(int32_t *pData)
   pData[1] = ( int32_t )( dataRaw[1] * sensitivity );
   pData[2] = ( int32_t )( dataRaw[2] * sensitivity );
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read Accelerometer Sensitivity
  * @param  pfData the pointer where the accelerometer sensitivity is stored
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_X_Sensitivity(float *pfData)
+int LSM6DSLSensor::Get_X_Sensitivity(float *pfData)
 {
   LSM6DSL_ACC_GYRO_FS_XL_t fullScale;
   
   /* Read actual full scale selection from sensor. */
   if ( LSM6DSL_ACC_GYRO_R_FS_XL( (void *)this, &fullScale ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Store the sensitivity based on actual full scale. */
@@ -382,18 +343,18 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_X_Sensitivity(float *pfData)
       break;
     default:
       *pfData = -1.0f;
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read Gyroscope Sensitivity
  * @param  pfData the pointer where the gyroscope sensitivity is stored
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_G_Sensitivity(float *pfData)
+int LSM6DSLSensor::Get_G_Sensitivity(float *pfData)
 {
   LSM6DSL_ACC_GYRO_FS_125_t fullScale125;
   LSM6DSL_ACC_GYRO_FS_G_t   fullScale;
@@ -401,7 +362,7 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_G_Sensitivity(float *pfData)
   /* Read full scale 125 selection from sensor. */
   if ( LSM6DSL_ACC_GYRO_R_FS_125( (void *)this, &fullScale125 ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   if ( fullScale125 == LSM6DSL_ACC_GYRO_FS_125_ENABLED )
@@ -415,7 +376,7 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_G_Sensitivity(float *pfData)
     /* Read actual full scale selection from sensor. */
     if ( LSM6DSL_ACC_GYRO_R_FS_G( (void *)this, &fullScale ) == MEMS_ERROR )
     {
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
     }
     
     /* Store the sensitivity based on actual full scale. */
@@ -435,26 +396,26 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_G_Sensitivity(float *pfData)
         break;
       default:
         *pfData = -1.0f;
-        return LSM6DSL_STATUS_ERROR;
+        return 1;
     }
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read raw data from LSM6DSL Accelerometer
  * @param  pData the pointer where the accelerometer raw data are stored
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_X_AxesRaw(int16_t *pData)
+int LSM6DSLSensor::Get_X_AxesRaw(int16_t *pData)
 {
   uint8_t regValue[6] = {0, 0, 0, 0, 0, 0};
   
   /* Read output registers from LSM6DSL_ACC_GYRO_OUTX_L_XL to LSM6DSL_ACC_GYRO_OUTZ_H_XL. */
   if ( LSM6DSL_ACC_GYRO_GetRawAccData( (void *)this, regValue ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Format the data. */
@@ -462,22 +423,22 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_X_AxesRaw(int16_t *pData)
   pData[1] = ( ( ( ( int16_t )regValue[3] ) << 8 ) + ( int16_t )regValue[2] );
   pData[2] = ( ( ( ( int16_t )regValue[5] ) << 8 ) + ( int16_t )regValue[4] );
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read raw data from LSM6DSL Gyroscope
  * @param  pData the pointer where the gyroscope raw data are stored
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_G_AxesRaw(int16_t *pData)
+int LSM6DSLSensor::Get_G_AxesRaw(int16_t *pData)
 {
   uint8_t regValue[6] = {0, 0, 0, 0, 0, 0};
   
   /* Read output registers from LSM6DSL_ACC_GYRO_OUTX_L_G to LSM6DSL_ACC_GYRO_OUTZ_H_G. */
   if ( LSM6DSL_ACC_GYRO_GetRawGyroData( (void *)this, regValue ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Format the data. */
@@ -485,21 +446,21 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_G_AxesRaw(int16_t *pData)
   pData[1] = ( ( ( ( int16_t )regValue[3] ) << 8 ) + ( int16_t )regValue[2] );
   pData[2] = ( ( ( ( int16_t )regValue[5] ) << 8 ) + ( int16_t )regValue[4] );
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read LSM6DSL Accelerometer output data rate
  * @param  odr the pointer to the output data rate
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_X_ODR(float* odr)
+int LSM6DSLSensor::Get_X_ODR(float* odr)
 {
   LSM6DSL_ACC_GYRO_ODR_XL_t odr_low_level;
   
   if ( LSM6DSL_ACC_GYRO_R_ODR_XL( (void *)this, &odr_low_level ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( odr_low_level )
@@ -539,24 +500,24 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_X_ODR(float* odr)
       break;
     default:
       *odr = -1.0f;
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read LSM6DSL Gyroscope output data rate
  * @param  odr the pointer to the output data rate
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_G_ODR(float* odr)
+int LSM6DSLSensor::Get_G_ODR(float* odr)
 {
   LSM6DSL_ACC_GYRO_ODR_G_t odr_low_level;
   
   if ( LSM6DSL_ACC_GYRO_R_ODR_G( (void *)this, &odr_low_level ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( odr_low_level )
@@ -596,43 +557,43 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_G_ODR(float* odr)
       break;
     default:
       *odr = -1.0f;
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Set LSM6DSL Accelerometer output data rate
  * @param  odr the output data rate to be set
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Set_X_ODR(float odr)
+int LSM6DSLSensor::Set_X_ODR(float odr)
 {
   if(X_isEnabled == 1)
   {
-    if(Set_X_ODR_When_Enabled(odr) == LSM6DSL_STATUS_ERROR)
+    if(Set_X_ODR_When_Enabled(odr) == 1)
     {
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
     }
   }
   else
   {
-    if(Set_X_ODR_When_Disabled(odr) == LSM6DSL_STATUS_ERROR)
+    if(Set_X_ODR_When_Disabled(odr) == 1)
     {
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
     }
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Set LSM6DSL Accelerometer output data rate when enabled
  * @param  odr the output data rate to be set
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Set_X_ODR_When_Enabled(float odr)
+int LSM6DSLSensor::Set_X_ODR_When_Enabled(float odr)
 {
   LSM6DSL_ACC_GYRO_ODR_XL_t new_odr;
   
@@ -649,18 +610,18 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Set_X_ODR_When_Enabled(float odr)
             
   if ( LSM6DSL_ACC_GYRO_W_ODR_XL( (void *)this, new_odr ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Set LSM6DSL Accelerometer output data rate when disabled
  * @param  odr the output data rate to be set
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Set_X_ODR_When_Disabled(float odr)
+int LSM6DSLSensor::Set_X_ODR_When_Disabled(float odr)
 { 
   X_Last_ODR = ( odr <=   13.0f ) ? 13.0f
              : ( odr <=   26.0f ) ? 26.0f
@@ -673,40 +634,40 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Set_X_ODR_When_Disabled(float odr)
              : ( odr <= 3330.0f ) ? 3330.0f
              :                      6660.0f;
                                  
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Set LSM6DSL Gyroscope output data rate
  * @param  odr the output data rate to be set
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Set_G_ODR(float odr)
+int LSM6DSLSensor::Set_G_ODR(float odr)
 {
   if(G_isEnabled == 1)
   {
-    if(Set_G_ODR_When_Enabled(odr) == LSM6DSL_STATUS_ERROR)
+    if(Set_G_ODR_When_Enabled(odr) == 1)
     {
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
     }
   }
   else
   {
-    if(Set_G_ODR_When_Disabled(odr) == LSM6DSL_STATUS_ERROR)
+    if(Set_G_ODR_When_Disabled(odr) == 1)
     {
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
     }
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Set LSM6DSL Gyroscope output data rate when enabled
  * @param  odr the output data rate to be set
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Set_G_ODR_When_Enabled(float odr)
+int LSM6DSLSensor::Set_G_ODR_When_Enabled(float odr)
 {
   LSM6DSL_ACC_GYRO_ODR_G_t new_odr;
   
@@ -723,18 +684,18 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Set_G_ODR_When_Enabled(float odr)
             
   if ( LSM6DSL_ACC_GYRO_W_ODR_G( (void *)this, new_odr ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Set LSM6DSL Gyroscope output data rate when disabled
  * @param  odr the output data rate to be set
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Set_G_ODR_When_Disabled(float odr)
+int LSM6DSLSensor::Set_G_ODR_When_Disabled(float odr)
 {
   G_Last_ODR = ( odr <=  13.0f )  ? 13.0f
              : ( odr <=  26.0f )  ? 26.0f
@@ -747,21 +708,21 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Set_G_ODR_When_Disabled(float odr)
              : ( odr <= 3330.0f ) ? 3330.0f
              :                      6660.0f;
                                  
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read LSM6DSL Accelerometer full scale
  * @param  fullScale the pointer to the full scale
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_X_FS(float* fullScale)
+int LSM6DSLSensor::Get_X_FS(float* fullScale)
 {
   LSM6DSL_ACC_GYRO_FS_XL_t fs_low_level;
   
   if ( LSM6DSL_ACC_GYRO_R_FS_XL( (void *)this, &fs_low_level ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( fs_low_level )
@@ -780,29 +741,29 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_X_FS(float* fullScale)
       break;
     default:
       *fullScale = -1.0f;
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read LSM6DSL Gyroscope full scale
  * @param  fullScale the pointer to the full scale
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_G_FS(float* fullScale)
+int LSM6DSLSensor::Get_G_FS(float* fullScale)
 {
   LSM6DSL_ACC_GYRO_FS_G_t fs_low_level;
   LSM6DSL_ACC_GYRO_FS_125_t fs_125;
   
   if ( LSM6DSL_ACC_GYRO_R_FS_125( (void *)this, &fs_125 ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   if ( LSM6DSL_ACC_GYRO_R_FS_G( (void *)this, &fs_low_level ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   if ( fs_125 == LSM6DSL_ACC_GYRO_FS_125_ENABLED )
@@ -828,19 +789,19 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_G_FS(float* fullScale)
         break;
       default:
         *fullScale = -1.0f;
-        return LSM6DSL_STATUS_ERROR;
+        return 1;
     }
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Set LSM6DSL Accelerometer full scale
  * @param  fullScale the full scale to be set
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Set_X_FS(float fullScale)
+int LSM6DSLSensor::Set_X_FS(float fullScale)
 {
   LSM6DSL_ACC_GYRO_FS_XL_t new_fs;
   
@@ -851,18 +812,18 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Set_X_FS(float fullScale)
            
   if ( LSM6DSL_ACC_GYRO_W_FS_XL( (void *)this, new_fs ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Set LSM6DSL Gyroscope full scale
  * @param  fullScale the full scale to be set
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Set_G_FS(float fullScale)
+int LSM6DSLSensor::Set_G_FS(float fullScale)
 {
   LSM6DSL_ACC_GYRO_FS_G_t new_fs;
   
@@ -870,7 +831,7 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Set_G_FS(float fullScale)
   {
     if ( LSM6DSL_ACC_GYRO_W_FS_125( (void *)this, LSM6DSL_ACC_GYRO_FS_125_ENABLED ) == MEMS_ERROR )
     {
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
     }
   }
   else
@@ -882,127 +843,127 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Set_G_FS(float fullScale)
              
     if ( LSM6DSL_ACC_GYRO_W_FS_125( (void *)this, LSM6DSL_ACC_GYRO_FS_125_DISABLED ) == MEMS_ERROR )
     {
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
     }
     if ( LSM6DSL_ACC_GYRO_W_FS_G( (void *)this, new_fs ) == MEMS_ERROR )
     {
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
     }
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Enable free fall detection
  * @note  This function sets the LSM6DSL accelerometer ODR to 416Hz and the LSM6DSL accelerometer full scale to 2g
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
 */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Enable_Free_Fall_Detection(void)
+int LSM6DSLSensor::Enable_Free_Fall_Detection(void)
 {
   /* Output Data Rate selection */
-  if(Set_X_ODR(416.0f) == LSM6DSL_STATUS_ERROR)
+  if(Set_X_ODR(416.0f) == 1)
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Full scale selection */
   if ( LSM6DSL_ACC_GYRO_W_FS_XL( (void *)this, LSM6DSL_ACC_GYRO_FS_XL_2g ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* FF_DUR setting */
   if ( LSM6DSL_ACC_GYRO_W_FF_Duration( (void *)this, 0x06 ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* WAKE_DUR setting */
   if ( LSM6DSL_ACC_GYRO_W_WAKE_DUR( (void *)this, 0x00 ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* TIMER_HR setting */
   if ( LSM6DSL_ACC_GYRO_W_TIMER_HR( (void *)this, LSM6DSL_ACC_GYRO_TIMER_HR_6_4ms ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* SLEEP_DUR setting */
   if ( LSM6DSL_ACC_GYRO_W_SLEEP_DUR( (void *)this, 0x00 ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* FF_THS setting */
   if ( LSM6DSL_ACC_GYRO_W_FF_THS( (void *)this, LSM6DSL_ACC_GYRO_FF_THS_312mg ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable basic Interrupts */
   if ( LSM6DSL_ACC_GYRO_W_BASIC_INT( (void *)this, LSM6DSL_ACC_GYRO_BASIC_INT_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* INT1_FF setting */
   if ( LSM6DSL_ACC_GYRO_W_FFEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_FF_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Disable free fall detection
  * @param  None
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
 */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Disable_Free_Fall_Detection(void)
+int LSM6DSLSensor::Disable_Free_Fall_Detection(void)
 {
   /* INT1_FF setting */
   if ( LSM6DSL_ACC_GYRO_W_FFEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_FF_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Disable basic Interrupts */
   if ( LSM6DSL_ACC_GYRO_W_BASIC_INT( (void *)this, LSM6DSL_ACC_GYRO_BASIC_INT_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* FF_DUR setting */
   if ( LSM6DSL_ACC_GYRO_W_FF_Duration( (void *)this, 0x00 ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* FF_THS setting */
   if ( LSM6DSL_ACC_GYRO_W_FF_THS( (void *)this, LSM6DSL_ACC_GYRO_FF_THS_156mg ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Get status of free fall detection
  * @param  status the pointer where the status of free fall detection is stored; 0 means no detection, 1 means detection happened
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
 */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_Status_Free_Fall_Detection(uint8_t *status)
+int LSM6DSLSensor::Get_Status_Free_Fall_Detection(uint8_t *status)
 {
   LSM6DSL_ACC_GYRO_FF_EV_STATUS_t free_fall_status;
   
   if ( LSM6DSL_ACC_GYRO_R_FF_EV_STATUS( (void *)this, &free_fall_status ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( free_fall_status )
@@ -1014,119 +975,119 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_Status_Free_Fall_Detection(uint8_t *stat
       *status = 0;
       break;
     default:
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Set the free fall detection threshold for LSM6DSL accelerometer sensor
  * @param thr the threshold to be set
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Set_Free_Fall_Threshold(uint8_t thr)
+int LSM6DSLSensor::Set_Free_Fall_Threshold(uint8_t thr)
 {
 
   if ( LSM6DSL_ACC_GYRO_W_FF_THS( (void *)this, (LSM6DSL_ACC_GYRO_FF_THS_t)thr ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Enable the pedometer feature for LSM6DSL accelerometer sensor
  * @note  This function sets the LSM6DSL accelerometer ODR to 26Hz and the LSM6DSL accelerometer full scale to 2g
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Enable_Pedometer(void)
+int LSM6DSLSensor::Enable_Pedometer(void)
 {
   /* Output Data Rate selection */
-  if( Set_X_ODR(26.0f) == LSM6DSL_STATUS_ERROR )
+  if( Set_X_ODR(26.0f) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Full scale selection. */
-  if( Set_X_FS(2.0f) == LSM6DSL_STATUS_ERROR )
+  if( Set_X_FS(2.0f) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Set pedometer threshold. */
-  if ( Set_Pedometer_Threshold(LSM6DSL_PEDOMETER_THRESHOLD_MID_HIGH) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Pedometer_Threshold(LSM6DSL_PEDOMETER_THRESHOLD_MID_HIGH) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable embedded functionalities. */
   if ( LSM6DSL_ACC_GYRO_W_FUNC_EN( (void *)this, LSM6DSL_ACC_GYRO_FUNC_EN_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable pedometer algorithm. */
   if ( LSM6DSL_ACC_GYRO_W_PEDO( (void *)this, LSM6DSL_ACC_GYRO_PEDO_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable pedometer on INT1. */
   if ( LSM6DSL_ACC_GYRO_W_STEP_DET_on_INT1( (void *)this, LSM6DSL_ACC_GYRO_INT1_PEDO_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Disable the pedometer feature for LSM6DSL accelerometer sensor
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Disable_Pedometer(void)
+int LSM6DSLSensor::Disable_Pedometer(void)
 {
   /* Disable pedometer on INT1. */
   if ( LSM6DSL_ACC_GYRO_W_STEP_DET_on_INT1( (void *)this, LSM6DSL_ACC_GYRO_INT1_PEDO_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Disable pedometer algorithm. */
   if ( LSM6DSL_ACC_GYRO_W_PEDO( (void *)this, LSM6DSL_ACC_GYRO_PEDO_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Disable embedded functionalities. */
   if ( LSM6DSL_ACC_GYRO_W_FUNC_EN( (void *)this, LSM6DSL_ACC_GYRO_FUNC_EN_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Reset pedometer threshold. */
-  if ( Set_Pedometer_Threshold(0x0) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Pedometer_Threshold(0x0) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Get the pedometer status for LSM6DSL accelerometer sensor
  * @param status the pointer to the pedometer status: 0 means no step detected, 1 means step detected
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_Status_Pedometer(uint8_t *status)
+int LSM6DSLSensor::Get_Status_Pedometer(uint8_t *status)
 {
   LSM6DSL_ACC_GYRO_PEDO_EV_STATUS_t pedometer_status;
   
   if ( LSM6DSL_ACC_GYRO_R_PEDO_EV_STATUS( (void *)this, &pedometer_status ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( pedometer_status )
@@ -1138,142 +1099,142 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_Status_Pedometer(uint8_t *status)
       *status = 0;
       break;
     default:
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Get the step counter for LSM6DSL accelerometer sensor
  * @param step_count the pointer to the step counter
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_Step_Counter(uint16_t *step_count)
+int LSM6DSLSensor::Get_Step_Counter(uint16_t *step_count)
 {
   if ( LSM6DSL_ACC_GYRO_Get_GetStepCounter( (void *)this, ( uint8_t* )step_count ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Reset of the step counter for LSM6DSL accelerometer sensor
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Reset_Step_Counter(void)
+int LSM6DSLSensor::Reset_Step_Counter(void)
 {
   if ( LSM6DSL_ACC_GYRO_W_PedoStepReset( (void *)this, LSM6DSL_ACC_GYRO_PEDO_RST_STEP_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   wait_ms(10);
   
   if ( LSM6DSL_ACC_GYRO_W_PedoStepReset( (void *)this, LSM6DSL_ACC_GYRO_PEDO_RST_STEP_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Set the pedometer threshold for LSM6DSL accelerometer sensor
  * @param thr the threshold to be set
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Set_Pedometer_Threshold(uint8_t thr)
+int LSM6DSLSensor::Set_Pedometer_Threshold(uint8_t thr)
 {
   if ( LSM6DSL_ACC_GYRO_W_PedoThreshold( (void *)this, thr ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Enable the tilt detection for LSM6DSL accelerometer sensor
  * @note  This function sets the LSM6DSL accelerometer ODR to 26Hz and the LSM6DSL accelerometer full scale to 2g
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Enable_Tilt_Detection(void)
+int LSM6DSLSensor::Enable_Tilt_Detection(void)
 {
   /* Output Data Rate selection */
-  if( Set_X_ODR(26.0f) == LSM6DSL_STATUS_ERROR )
+  if( Set_X_ODR(26.0f) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Full scale selection. */
-  if( Set_X_FS(2.0f) == LSM6DSL_STATUS_ERROR )
+  if( Set_X_FS(2.0f) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable embedded functionalities */
   if ( LSM6DSL_ACC_GYRO_W_FUNC_EN( (void *)this, LSM6DSL_ACC_GYRO_FUNC_EN_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable tilt calculation. */
   if ( LSM6DSL_ACC_GYRO_W_TILT( (void *)this, LSM6DSL_ACC_GYRO_TILT_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable tilt event on INT1. */
   if ( LSM6DSL_ACC_GYRO_W_TiltEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_TILT_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Disable the tilt detection for LSM6DSL accelerometer sensor
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Disable_Tilt_Detection(void)
+int LSM6DSLSensor::Disable_Tilt_Detection(void)
 {
   /* Disable tilt event on INT1. */
   if ( LSM6DSL_ACC_GYRO_W_TiltEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_TILT_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
 
   /* Disable tilt calculation. */
   if ( LSM6DSL_ACC_GYRO_W_TILT( (void *)this, LSM6DSL_ACC_GYRO_TILT_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Disable embedded functionalities */
   if ( LSM6DSL_ACC_GYRO_W_FUNC_EN( (void *)this, LSM6DSL_ACC_GYRO_FUNC_EN_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Get the tilt detection status for LSM6DSL accelerometer sensor
  * @param status the pointer to the tilt detection status: 0 means no tilt detected, 1 means tilt detected
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_Status_Tilt_Detection(uint8_t *status)
+int LSM6DSLSensor::Get_Status_Tilt_Detection(uint8_t *status)
 {
   LSM6DSL_ACC_GYRO_TILT_EV_STATUS_t tilt_status;
   
   if ( LSM6DSL_ACC_GYRO_R_TILT_EV_STATUS( (void *)this, &tilt_status ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( tilt_status )
@@ -1285,103 +1246,103 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_Status_Tilt_Detection(uint8_t *status)
       *status = 0;
       break;
     default:
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Enable the wake up detection for LSM6DSL accelerometer sensor
  * @note  This function sets the LSM6DSL accelerometer ODR to 416Hz and the LSM6DSL accelerometer full scale to 2g
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Enable_Wake_Up_Detection(void)
+int LSM6DSLSensor::Enable_Wake_Up_Detection(void)
 {
   /* Output Data Rate selection */
-  if( Set_X_ODR(416.0f) == LSM6DSL_STATUS_ERROR )
+  if( Set_X_ODR(416.0f) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Full scale selection. */
-  if( Set_X_FS(2.0f) == LSM6DSL_STATUS_ERROR )
+  if( Set_X_FS(2.0f) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* WAKE_DUR setting */
   if ( LSM6DSL_ACC_GYRO_W_WAKE_DUR( (void *)this, 0x00 ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Set wake up threshold. */
   if ( LSM6DSL_ACC_GYRO_W_WK_THS( (void *)this, 0x02 ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable basic Interrupts */
   if ( LSM6DSL_ACC_GYRO_W_BASIC_INT( (void *)this, LSM6DSL_ACC_GYRO_BASIC_INT_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* INT1_WU setting */
   if ( LSM6DSL_ACC_GYRO_W_WUEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_WU_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Disable the wake up detection for LSM6DSL accelerometer sensor
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Disable_Wake_Up_Detection(void)
+int LSM6DSLSensor::Disable_Wake_Up_Detection(void)
 {
   /* INT1_WU setting */
   if ( LSM6DSL_ACC_GYRO_W_WUEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_WU_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Disable basic Interrupts */
   if ( LSM6DSL_ACC_GYRO_W_BASIC_INT( (void *)this, LSM6DSL_ACC_GYRO_BASIC_INT_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* WU_DUR setting */
   if ( LSM6DSL_ACC_GYRO_W_WAKE_DUR( (void *)this, 0x00 ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* WU_THS setting */
   if ( LSM6DSL_ACC_GYRO_W_WK_THS( (void *)this, 0x00 ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Get the status of the wake up detection for LSM6DSL accelerometer sensor
  * @param status the pointer to the status of the wake up detection: 0 means no detection, 1 means detection happened
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_Status_Wake_Up_Detection(uint8_t *status)
+int LSM6DSLSensor::Get_Status_Wake_Up_Detection(uint8_t *status)
 {
   LSM6DSL_ACC_GYRO_WU_EV_STATUS_t wake_up_status;
   
   if ( LSM6DSL_ACC_GYRO_R_WU_EV_STATUS( (void *)this, &wake_up_status ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( wake_up_status )
@@ -1393,80 +1354,80 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_Status_Wake_Up_Detection(uint8_t *status
       *status = 0;
       break;
     default:
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Set the wake up threshold for LSM6DSL accelerometer sensor
  * @param thr the threshold to be set
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Set_Wake_Up_Threshold(uint8_t thr)
+int LSM6DSLSensor::Set_Wake_Up_Threshold(uint8_t thr)
 {
   if ( LSM6DSL_ACC_GYRO_W_WK_THS( (void *)this, thr ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Enable the single tap detection for LSM6DSL accelerometer sensor
  * @note  This function sets the LSM6DSL accelerometer ODR to 416Hz and the LSM6DSL accelerometer full scale to 2g
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Enable_Single_Tap_Detection(void)
+int LSM6DSLSensor::Enable_Single_Tap_Detection(void)
 {
   /* Output Data Rate selection */
-  if( Set_X_ODR(416.0f) == LSM6DSL_STATUS_ERROR )
+  if( Set_X_ODR(416.0f) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Full scale selection. */
-  if( Set_X_FS(2.0f) == LSM6DSL_STATUS_ERROR )
+  if( Set_X_FS(2.0f) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
 
   /* Enable X direction in tap recognition. */
   if ( LSM6DSL_ACC_GYRO_W_TAP_X_EN( (void *)this, LSM6DSL_ACC_GYRO_TAP_X_EN_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable Y direction in tap recognition. */
   if ( LSM6DSL_ACC_GYRO_W_TAP_Y_EN( (void *)this, LSM6DSL_ACC_GYRO_TAP_Y_EN_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable Z direction in tap recognition. */
   if ( LSM6DSL_ACC_GYRO_W_TAP_Z_EN( (void *)this, LSM6DSL_ACC_GYRO_TAP_Z_EN_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Set tap threshold. */
-  if ( Set_Tap_Threshold( LSM6DSL_TAP_THRESHOLD_MID_LOW ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Tap_Threshold( LSM6DSL_TAP_THRESHOLD_MID_LOW ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Set tap shock time window. */
-  if ( Set_Tap_Shock_Time( LSM6DSL_TAP_SHOCK_TIME_MID_HIGH ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Tap_Shock_Time( LSM6DSL_TAP_SHOCK_TIME_MID_HIGH ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Set tap quiet time window. */
-  if ( Set_Tap_Quiet_Time( LSM6DSL_TAP_QUIET_TIME_MID_LOW ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Tap_Quiet_Time( LSM6DSL_TAP_QUIET_TIME_MID_LOW ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* _NOTE_: Tap duration time window - don't care for single tap. */
@@ -1476,52 +1437,52 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Enable_Single_Tap_Detection(void)
   /* Enable basic Interrupts */
   if ( LSM6DSL_ACC_GYRO_W_BASIC_INT( (void *)this, LSM6DSL_ACC_GYRO_BASIC_INT_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable single tap interrupt on INT1 pin. */
   if ( LSM6DSL_ACC_GYRO_W_SingleTapOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_SINGLE_TAP_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Disable the single tap detection for LSM6DSL accelerometer sensor
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Disable_Single_Tap_Detection(void)
+int LSM6DSLSensor::Disable_Single_Tap_Detection(void)
 {
   /* Disable single tap interrupt on INT1 pin. */
   if ( LSM6DSL_ACC_GYRO_W_SingleTapOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_SINGLE_TAP_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Disable basic Interrupts */
   if ( LSM6DSL_ACC_GYRO_W_BASIC_INT( (void *)this, LSM6DSL_ACC_GYRO_BASIC_INT_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Reset tap threshold. */
-  if ( Set_Tap_Threshold( 0x0 ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Tap_Threshold( 0x0 ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Reset tap shock time window. */
-  if ( Set_Tap_Shock_Time( 0x0 ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Tap_Shock_Time( 0x0 ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Reset tap quiet time window. */
-  if ( Set_Tap_Quiet_Time( 0x0 ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Tap_Quiet_Time( 0x0 ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* _NOTE_: Tap duration time window - don't care for single tap. */
@@ -1531,36 +1492,36 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Disable_Single_Tap_Detection(void)
   /* Disable Z direction in tap recognition. */
   if ( LSM6DSL_ACC_GYRO_W_TAP_Z_EN( (void *)this, LSM6DSL_ACC_GYRO_TAP_Z_EN_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Disable Y direction in tap recognition. */
   if ( LSM6DSL_ACC_GYRO_W_TAP_Y_EN( (void *)this, LSM6DSL_ACC_GYRO_TAP_Y_EN_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Disable X direction in tap recognition. */
   if ( LSM6DSL_ACC_GYRO_W_TAP_X_EN( (void *)this, LSM6DSL_ACC_GYRO_TAP_X_EN_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Get the single tap detection status for LSM6DSL accelerometer sensor
  * @param status the pointer to the single tap detection status: 0 means no single tap detected, 1 means single tap detected
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_Status_Single_Tap_Detection(uint8_t *status)
+int LSM6DSLSensor::Get_Status_Single_Tap_Detection(uint8_t *status)
 {
   LSM6DSL_ACC_GYRO_SINGLE_TAP_EV_STATUS_t tap_status;
   
   if ( LSM6DSL_ACC_GYRO_R_SINGLE_TAP_EV_STATUS( (void *)this, &tap_status ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( tap_status )
@@ -1574,175 +1535,175 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_Status_Single_Tap_Detection(uint8_t *sta
       break;
       
     default:
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Enable the double tap detection for LSM6DSL accelerometer sensor
  * @note  This function sets the LSM6DSL accelerometer ODR to 416Hz and the LSM6DSL accelerometer full scale to 2g
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Enable_Double_Tap_Detection(void)
+int LSM6DSLSensor::Enable_Double_Tap_Detection(void)
 {
   /* Output Data Rate selection */
-  if( Set_X_ODR(416.0f) == LSM6DSL_STATUS_ERROR )
+  if( Set_X_ODR(416.0f) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Full scale selection. */
-  if( Set_X_FS(2.0f) == LSM6DSL_STATUS_ERROR )
+  if( Set_X_FS(2.0f) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
 
   /* Enable X direction in tap recognition. */
   if ( LSM6DSL_ACC_GYRO_W_TAP_X_EN( (void *)this, LSM6DSL_ACC_GYRO_TAP_X_EN_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable Y direction in tap recognition. */
   if ( LSM6DSL_ACC_GYRO_W_TAP_Y_EN( (void *)this, LSM6DSL_ACC_GYRO_TAP_Y_EN_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable Z direction in tap recognition. */
   if ( LSM6DSL_ACC_GYRO_W_TAP_Z_EN( (void *)this, LSM6DSL_ACC_GYRO_TAP_Z_EN_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Set tap threshold. */
-  if ( Set_Tap_Threshold( LSM6DSL_TAP_THRESHOLD_MID_LOW ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Tap_Threshold( LSM6DSL_TAP_THRESHOLD_MID_LOW ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Set tap shock time window. */
-  if ( Set_Tap_Shock_Time( LSM6DSL_TAP_SHOCK_TIME_HIGH ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Tap_Shock_Time( LSM6DSL_TAP_SHOCK_TIME_HIGH ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Set tap quiet time window. */
-  if ( Set_Tap_Quiet_Time( LSM6DSL_TAP_QUIET_TIME_HIGH ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Tap_Quiet_Time( LSM6DSL_TAP_QUIET_TIME_HIGH ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Set tap duration time window. */
-  if ( Set_Tap_Duration_Time( LSM6DSL_TAP_DURATION_TIME_MID ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Tap_Duration_Time( LSM6DSL_TAP_DURATION_TIME_MID ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Single and double tap enabled. */
   if ( LSM6DSL_ACC_GYRO_W_SINGLE_DOUBLE_TAP_EV( (void *)this, LSM6DSL_ACC_GYRO_SINGLE_DOUBLE_TAP_DOUBLE_TAP ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable basic Interrupts */
   if ( LSM6DSL_ACC_GYRO_W_BASIC_INT( (void *)this, LSM6DSL_ACC_GYRO_BASIC_INT_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable double tap interrupt on INT1 pin. */
   if ( LSM6DSL_ACC_GYRO_W_TapEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_TAP_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Disable the double tap detection for LSM6DSL accelerometer sensor
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Disable_Double_Tap_Detection(void)
+int LSM6DSLSensor::Disable_Double_Tap_Detection(void)
 {
   /* Disable double tap interrupt on INT1 pin. */
   if ( LSM6DSL_ACC_GYRO_W_TapEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_TAP_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Disable basic Interrupts */
   if ( LSM6DSL_ACC_GYRO_W_BASIC_INT( (void *)this, LSM6DSL_ACC_GYRO_BASIC_INT_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Reset tap threshold. */
-  if ( Set_Tap_Threshold( 0x0 ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Tap_Threshold( 0x0 ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Reset tap shock time window. */
-  if ( Set_Tap_Shock_Time( 0x0 ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Tap_Shock_Time( 0x0 ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Reset tap quiet time window. */
-  if ( Set_Tap_Quiet_Time( 0x0 ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Tap_Quiet_Time( 0x0 ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Reset tap duration time window. */
-  if ( Set_Tap_Duration_Time( 0x0 ) == LSM6DSL_STATUS_ERROR )
+  if ( Set_Tap_Duration_Time( 0x0 ) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Only single tap enabled. */
   if ( LSM6DSL_ACC_GYRO_W_SINGLE_DOUBLE_TAP_EV( (void *)this, LSM6DSL_ACC_GYRO_SINGLE_DOUBLE_TAP_SINGLE_TAP ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Disable Z direction in tap recognition. */
   if ( LSM6DSL_ACC_GYRO_W_TAP_Z_EN( (void *)this, LSM6DSL_ACC_GYRO_TAP_Z_EN_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Disable Y direction in tap recognition. */
   if ( LSM6DSL_ACC_GYRO_W_TAP_Y_EN( (void *)this, LSM6DSL_ACC_GYRO_TAP_Y_EN_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Disable X direction in tap recognition. */
   if ( LSM6DSL_ACC_GYRO_W_TAP_X_EN( (void *)this, LSM6DSL_ACC_GYRO_TAP_X_EN_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Get the double tap detection status for LSM6DSL accelerometer sensor
  * @param status the pointer to the double tap detection status: 0 means no double tap detected, 1 means double tap detected
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_Status_Double_Tap_Detection(uint8_t *status)
+int LSM6DSLSensor::Get_Status_Double_Tap_Detection(uint8_t *status)
 {
   LSM6DSL_ACC_GYRO_DOUBLE_TAP_EV_STATUS_t tap_status;
   
   if ( LSM6DSL_ACC_GYRO_R_DOUBLE_TAP_EV_STATUS( (void *)this, &tap_status ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( tap_status )
@@ -1756,151 +1717,151 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_Status_Double_Tap_Detection(uint8_t *sta
       break;
       
     default:
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Set the tap threshold for LSM6DSL accelerometer sensor
  * @param thr the threshold to be set
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Set_Tap_Threshold(uint8_t thr)
+int LSM6DSLSensor::Set_Tap_Threshold(uint8_t thr)
 {
   if ( LSM6DSL_ACC_GYRO_W_TAP_THS( (void *)this, thr ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Set the tap shock time window for LSM6DSL accelerometer sensor
  * @param time the shock time window to be set
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Set_Tap_Shock_Time(uint8_t time)
+int LSM6DSLSensor::Set_Tap_Shock_Time(uint8_t time)
 {
   if ( LSM6DSL_ACC_GYRO_W_SHOCK_Duration( (void *)this, time ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Set the tap quiet time window for LSM6DSL accelerometer sensor
  * @param time the quiet time window to be set
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Set_Tap_Quiet_Time(uint8_t time)
+int LSM6DSLSensor::Set_Tap_Quiet_Time(uint8_t time)
 {
   if ( LSM6DSL_ACC_GYRO_W_QUIET_Duration( (void *)this, time ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Set the tap duration of the time window for LSM6DSL accelerometer sensor
  * @param time the duration of the time window to be set
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Set_Tap_Duration_Time(uint8_t time)
+int LSM6DSLSensor::Set_Tap_Duration_Time(uint8_t time)
 {
   if ( LSM6DSL_ACC_GYRO_W_DUR( (void *)this, time ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Enable the 6D orientation detection for LSM6DSL accelerometer sensor
  * @note  This function sets the LSM6DSL accelerometer ODR to 416Hz and the LSM6DSL accelerometer full scale to 2g
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Enable_6D_Orientation(void)
+int LSM6DSLSensor::Enable_6D_Orientation(void)
 {
   /* Output Data Rate selection */
-  if( Set_X_ODR(416.0f) == LSM6DSL_STATUS_ERROR )
+  if( Set_X_ODR(416.0f) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Full scale selection. */
-  if( Set_X_FS(2.0f) == LSM6DSL_STATUS_ERROR )
+  if( Set_X_FS(2.0f) == 1 )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
 
   /* Set 6D threshold. */
   if ( LSM6DSL_ACC_GYRO_W_SIXD_THS( (void *)this, LSM6DSL_ACC_GYRO_SIXD_THS_60_degree ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Enable basic Interrupts */
   if ( LSM6DSL_ACC_GYRO_W_BASIC_INT( (void *)this, LSM6DSL_ACC_GYRO_BASIC_INT_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* INT1_6D setting. */
   if ( LSM6DSL_ACC_GYRO_W_6DEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_6D_ENABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Disable the 6D orientation detection for LSM6DSL accelerometer sensor
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Disable_6D_Orientation(void)
+int LSM6DSLSensor::Disable_6D_Orientation(void)
 {
   /* INT1_6D setting. */
   if ( LSM6DSL_ACC_GYRO_W_6DEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_6D_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Disable basic Interrupts */
   if ( LSM6DSL_ACC_GYRO_W_BASIC_INT( (void *)this, LSM6DSL_ACC_GYRO_BASIC_INT_DISABLED ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   /* Reset 6D threshold. */
   if ( LSM6DSL_ACC_GYRO_W_SIXD_THS( (void *)this, LSM6DSL_ACC_GYRO_SIXD_THS_80_degree ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Get the status of the 6D orientation detection for LSM6DSL accelerometer sensor
  * @param status the pointer to the status of the 6D orientation detection: 0 means no detection, 1 means detection happened
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_Status_6D_Orientation(uint8_t *status)
+int LSM6DSLSensor::Get_Status_6D_Orientation(uint8_t *status)
 {
   LSM6DSL_ACC_GYRO_D6D_EV_STATUS_t status_raw;
   
   if ( LSM6DSL_ACC_GYRO_R_D6D_EV_STATUS( (void *)this, &status_raw ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( status_raw )
@@ -1912,24 +1873,24 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_Status_6D_Orientation(uint8_t *status)
       *status = 0;
       break;
     default:
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Get the 6D orientation XL axis for LSM6DSL accelerometer sensor
  * @param xl the pointer to the 6D orientation XL axis
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_6D_Orientation_XL(uint8_t *xl)
+int LSM6DSLSensor::Get_6D_Orientation_XL(uint8_t *xl)
 {
   LSM6DSL_ACC_GYRO_DSD_XL_t xl_raw;
   
   if ( LSM6DSL_ACC_GYRO_R_DSD_XL( (void *)this, &xl_raw ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( xl_raw )
@@ -1941,24 +1902,24 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_6D_Orientation_XL(uint8_t *xl)
       *xl = 0;
       break;
     default:
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Get the 6D orientation XH axis for LSM6DSL accelerometer sensor
  * @param xh the pointer to the 6D orientation XH axis
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_6D_Orientation_XH(uint8_t *xh)
+int LSM6DSLSensor::Get_6D_Orientation_XH(uint8_t *xh)
 {
   LSM6DSL_ACC_GYRO_DSD_XH_t xh_raw;
   
   if ( LSM6DSL_ACC_GYRO_R_DSD_XH( (void *)this, &xh_raw ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( xh_raw )
@@ -1970,24 +1931,24 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_6D_Orientation_XH(uint8_t *xh)
       *xh = 0;
       break;
     default:
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Get the 6D orientation YL axis for LSM6DSL accelerometer sensor
  * @param yl the pointer to the 6D orientation YL axis
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_6D_Orientation_YL(uint8_t *yl)
+int LSM6DSLSensor::Get_6D_Orientation_YL(uint8_t *yl)
 {
   LSM6DSL_ACC_GYRO_DSD_YL_t yl_raw;
   
   if ( LSM6DSL_ACC_GYRO_R_DSD_YL( (void *)this, &yl_raw ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( yl_raw )
@@ -1999,24 +1960,24 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_6D_Orientation_YL(uint8_t *yl)
       *yl = 0;
       break;
     default:
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Get the 6D orientation YH axis for LSM6DSL accelerometer sensor
  * @param yh the pointer to the 6D orientation YH axis
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_6D_Orientation_YH(uint8_t *yh)
+int LSM6DSLSensor::Get_6D_Orientation_YH(uint8_t *yh)
 {
   LSM6DSL_ACC_GYRO_DSD_YH_t yh_raw;
   
   if ( LSM6DSL_ACC_GYRO_R_DSD_YH( (void *)this, &yh_raw ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( yh_raw )
@@ -2028,24 +1989,24 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_6D_Orientation_YH(uint8_t *yh)
       *yh = 0;
       break;
     default:
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Get the 6D orientation ZL axis for LSM6DSL accelerometer sensor
  * @param zl the pointer to the 6D orientation ZL axis
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_6D_Orientation_ZL(uint8_t *zl)
+int LSM6DSLSensor::Get_6D_Orientation_ZL(uint8_t *zl)
 {
   LSM6DSL_ACC_GYRO_DSD_ZL_t zl_raw;
   
   if ( LSM6DSL_ACC_GYRO_R_DSD_ZL( (void *)this, &zl_raw ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( zl_raw )
@@ -2057,24 +2018,24 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_6D_Orientation_ZL(uint8_t *zl)
       *zl = 0;
       break;
     default:
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Get the 6D orientation ZH axis for LSM6DSL accelerometer sensor
  * @param zh the pointer to the 6D orientation ZH axis
- * @retval LSM6DSL_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::Get_6D_Orientation_ZH(uint8_t *zh)
+int LSM6DSLSensor::Get_6D_Orientation_ZH(uint8_t *zh)
 {
   LSM6DSL_ACC_GYRO_DSD_ZH_t zh_raw;
   
   if ( LSM6DSL_ACC_GYRO_R_DSD_ZH( (void *)this, &zh_raw ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
   
   switch( zh_raw )
@@ -2086,46 +2047,46 @@ LSM6DSLStatusTypeDef LSM6DSLSensor::Get_6D_Orientation_ZH(uint8_t *zh)
       *zh = 0;
       break;
     default:
-      return LSM6DSL_STATUS_ERROR;
+      return 1;
   }
   
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Read the data from register
  * @param reg register address
  * @param data register data
- * @retval LSM6DSL_STATUS_OK in case of success
- * @retval LSM6DSL_STATUS_ERROR in case of failure
+ * @retval 0 in case of success
+ * @retval 1 in case of failure
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::ReadReg( uint8_t reg, uint8_t *data )
+int LSM6DSLSensor::ReadReg( uint8_t reg, uint8_t *data )
 {
 
   if ( LSM6DSL_ACC_GYRO_ReadReg( (void *)this, reg, data, 1 ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
 
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Write the data to register
  * @param reg register address
  * @param data register data
- * @retval LSM6DSL_STATUS_OK in case of success
- * @retval LSM6DSL_STATUS_ERROR in case of failure
+ * @retval 0 in case of success
+ * @retval 1 in case of failure
  */
-LSM6DSLStatusTypeDef LSM6DSLSensor::WriteReg( uint8_t reg, uint8_t data )
+int LSM6DSLSensor::WriteReg( uint8_t reg, uint8_t data )
 {
 
   if ( LSM6DSL_ACC_GYRO_WriteReg( (void *)this, reg, &data, 1 ) == MEMS_ERROR )
   {
-    return LSM6DSL_STATUS_ERROR;
+    return 1;
   }
 
-  return LSM6DSL_STATUS_OK;
+  return 0;
 }
 
 

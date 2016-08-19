@@ -126,10 +126,10 @@ int main() {
 
     printf("---\r\n");
 
-    magnetometer->GetAxes(axes);
+    magnetometer->Get_M_Axes(axes);
     printf("LSM303AGR [mag/mgauss]:  %6ld, %6ld, %6ld\r\n", axes[0], axes[1], axes[2]);
     
-    accelerometer->GetAxes(axes);
+    accelerometer->Get_X_Axes(axes);
     printf("LSM303AGR [acc/mg]:  %6ld, %6ld, %6ld\r\n", axes[0], axes[1], axes[2]);
 
     acc_gyro->Get_X_Axes(axes);

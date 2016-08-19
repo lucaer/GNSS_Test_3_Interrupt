@@ -53,44 +53,6 @@
 LPS22HBSensor::LPS22HBSensor(DevI2C &i2c) : dev_i2c(i2c)
 {
   address = LPS22HB_ADDRESS_HIGH;
-
-  if ( LPS22HB_Set_PowerMode( (void *)this, LPS22HB_LowPower) == LPS22HB_ERROR )
-  {
-    return;
-  }
-
-  /* Power down the device */
-  if ( LPS22HB_Set_Odr( (void *)this, LPS22HB_ODR_ONE_SHOT ) == LPS22HB_ERROR )
-  {
-    return;
-  }
-
-  /* Disable low-pass filter on LPS22HB pressure data */
-  if( LPS22HB_Set_LowPassFilter( (void *)this, LPS22HB_DISABLE) == LPS22HB_ERROR )
-  {
-    return;
-  }
-
-  /* Set low-pass filter cutoff configuration*/
-  if( LPS22HB_Set_LowPassFilterCutoff( (void *)this, LPS22HB_ODR_9) == LPS22HB_ERROR )
-  {
-    return;
-  }
-
-  /* Set block data update mode */
-  if ( LPS22HB_Set_Bdu( (void *)this, LPS22HB_BDU_NO_UPDATE ) == LPS22HB_ERROR )
-  {
-    return;
-  }
-
-  /* Set automatic increment for multi-byte read/write */
-  if( LPS22HB_Set_AutomaticIncrementRegAddress( (void *)this, LPS22HB_ENABLE) == LPS22HB_ERROR )
-  {
-    return;
-  }
-
-  isEnabled = 0;
-  Last_ODR = 25.0f;
 };
 
 
@@ -100,180 +62,192 @@ LPS22HBSensor::LPS22HBSensor(DevI2C &i2c) : dev_i2c(i2c)
  */
 LPS22HBSensor::LPS22HBSensor(DevI2C &i2c, uint8_t address) : dev_i2c(i2c), address(address)
 {
+
+};
+
+/**
+ * @brief     Initializing the component.
+ * @param[in] init pointer to device specific initalization structure.
+ * @retval    "0" in case of success, an error code otherwise.
+ */
+int LPS22HBSensor::Init(void *init)
+{
   if ( LPS22HB_Set_PowerMode( (void *)this, LPS22HB_LowPower) == LPS22HB_ERROR )
   {
-    return;
+    return 1;
   }
 
   /* Power down the device */
   if ( LPS22HB_Set_Odr( (void *)this, LPS22HB_ODR_ONE_SHOT ) == LPS22HB_ERROR )
   {
-    return;
+    return 1;
   }
 
   /* Disable low-pass filter on LPS22HB pressure data */
   if( LPS22HB_Set_LowPassFilter( (void *)this, LPS22HB_DISABLE) == LPS22HB_ERROR )
   {
-    return;
+    return 1;
   }
 
   /* Set low-pass filter cutoff configuration*/
   if( LPS22HB_Set_LowPassFilterCutoff( (void *)this, LPS22HB_ODR_9) == LPS22HB_ERROR )
   {
-    return;
+    return 1;
   }
 
   /* Set block data update mode */
   if ( LPS22HB_Set_Bdu( (void *)this, LPS22HB_BDU_NO_UPDATE ) == LPS22HB_ERROR )
   {
-    return;
+    return 1;
   }
 
   /* Set automatic increment for multi-byte read/write */
   if( LPS22HB_Set_AutomaticIncrementRegAddress( (void *)this, LPS22HB_ENABLE) == LPS22HB_ERROR )
   {
-    return;
+    return 1;
   }
 
   isEnabled = 0;
   Last_ODR = 25.0f;
-};
+  
+  return 0;
+}
 
 
 /**
  * @brief  Enable LPS22HB
- * @retval LPS22HB_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LPS22HBStatusTypeDef LPS22HBSensor::Enable(void)
+int LPS22HBSensor::Enable(void)
 {
   /* Check if the component is already enabled */
   if ( isEnabled == 1 )
   {
-    return LPS22HB_STATUS_OK;
+    return 0;
   }
   
-  if(SetODR_When_Enabled(Last_ODR) == LPS22HB_STATUS_ERROR)
+  if(Set_ODR_When_Enabled(Last_ODR) == 1)
   {
-    return LPS22HB_STATUS_ERROR;
+    return 1;
   }
   
   isEnabled = 1;
 
-  return LPS22HB_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Disable LPS22HB
- * @retval LPS22HB_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LPS22HBStatusTypeDef LPS22HBSensor::Disable(void)
+int LPS22HBSensor::Disable(void)
 {
   /* Check if the component is already disabled */
   if ( isEnabled == 0 )
   {
-    return LPS22HB_STATUS_OK;
+    return 0;
   }
   
   /* Power down the device */
   if ( LPS22HB_Set_Odr( (void *)this, LPS22HB_ODR_ONE_SHOT ) == LPS22HB_ERROR )
   {
-    return LPS22HB_STATUS_ERROR;
+    return 1;
   }
   
   isEnabled = 0;
 
-  return LPS22HB_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read ID address of LPS22HB
- * @param  ht_id the pointer where the ID of the device is stored
- * @retval LPS22HB_STATUS_OK in case of success, an error code otherwise
+ * @param  id the pointer where the ID of the device is stored
+ * @retval 0 in case of success, an error code otherwise
  */
-LPS22HBStatusTypeDef LPS22HBSensor::ReadID(uint8_t *p_id)
+int LPS22HBSensor::ReadID(uint8_t *id)
 {
-  if(!p_id)
+  if(!id)
   { 
-    return LPS22HB_STATUS_ERROR;
+    return 1;
   }
  
   /* Read WHO AM I register */
-  if ( LPS22HB_Get_DeviceID( (void *)this, p_id ) == LPS22HB_ERROR )
+  if ( LPS22HB_Get_DeviceID( (void *)this, id ) == LPS22HB_ERROR )
   {
-    return LPS22HB_STATUS_ERROR;
+    return 1;
   }
 
-  return LPS22HB_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Reboot memory content of LPS22HB
  * @param  None
- * @retval LPS22HB_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LPS22HBStatusTypeDef LPS22HBSensor::Reset(void)
+int LPS22HBSensor::Reset(void)
 {
   /* Read WHO AM I register */
   if ( LPS22HB_MemoryBoot((void *)this) == LPS22HB_ERROR )
   {
-    return LPS22HB_STATUS_ERROR;
+    return 1;
   }
 
-  return LPS22HB_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read LPS22HB output register, and calculate the pressure in mbar
  * @param  pfData the pressure value in mbar
- * @retval LPS22HB_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LPS22HBStatusTypeDef LPS22HBSensor::GetPressure(float* pfData)
+int LPS22HBSensor::GetPressure(float* pfData)
 {
   int32_t int32data = 0;
 
   /* Read data from LPS22HB. */
   if ( LPS22HB_Get_Pressure( (void *)this, &int32data ) == LPS22HB_ERROR )
   {
-    return LPS22HB_STATUS_ERROR;
+    return 1;
   }
 
   *pfData = ( float )int32data / 100.0f;
 
-  return LPS22HB_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read LPS22HB output register, and calculate the temperature
  * @param  pfData the temperature value
- * @retval LPS22HB_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LPS22HBStatusTypeDef LPS22HBSensor::GetTemperature(float *pfData)
+int LPS22HBSensor::GetTemperature(float *pfData)
 {
   int16_t int16data = 0;
 
   /* Read data from LPS22HB. */
   if ( LPS22HB_Get_Temperature( (void *)this, &int16data ) == LPS22HB_ERROR )
   {
-    return LPS22HB_STATUS_ERROR;
+    return 1;
   }
 
   *pfData = ( float )int16data / 10.0f;
 
-  return LPS22HB_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read LPS22HB output data rate
  * @param  odr the pointer to the output data rate
- * @retval LPS22HB_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LPS22HBStatusTypeDef LPS22HBSensor::GetODR(float* odr)
+int LPS22HBSensor::Get_ODR(float* odr)
 {
   LPS22HB_Odr_et odr_low_level;
 
   if ( LPS22HB_Get_Odr( (void *)this, &odr_low_level ) == LPS22HB_ERROR )
   {
-    return LPS22HB_STATUS_ERROR;
+    return 1;
   }
 
   switch( odr_low_level )
@@ -298,45 +272,45 @@ LPS22HBStatusTypeDef LPS22HBSensor::GetODR(float* odr)
       break;
     default:
       *odr = -1.0f;
-      return LPS22HB_STATUS_ERROR;
+      return 1;
   }
 
-  return LPS22HB_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Set ODR
  * @param  odr the output data rate to be set
- * @retval LPS22HB_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-LPS22HBStatusTypeDef LPS22HBSensor::SetODR(float odr)
+int LPS22HBSensor::Set_ODR(float odr)
 {
   if(isEnabled == 1)
   {
-    if(SetODR_When_Enabled(odr) == LPS22HB_STATUS_ERROR)
+    if(Set_ODR_When_Enabled(odr) == 1)
     {
-      return LPS22HB_STATUS_ERROR;
+      return 1;
     }
   }
   else
   {
-    if(SetODR_When_Disabled(odr) == LPS22HB_STATUS_ERROR)
+    if(Set_ODR_When_Disabled(odr) == 1)
     {
-      return LPS22HB_STATUS_ERROR;
+      return 1;
     }
   }
 
-  return LPS22HB_STATUS_OK;
+  return 0;
 }
 
 
 /**
  * @brief Set the LPS22HB sensor output data rate when enabled
  * @param odr the functional output data rate to be set
- * @retval LPS22HB_STATUS_OK in case of success
- * @retval LPS22HB_STATUS_ERROR in case of failure
+ * @retval 0 in case of success
+ * @retval 1 in case of failure
  */
-LPS22HBStatusTypeDef LPS22HBSensor::SetODR_When_Enabled( float odr )
+int LPS22HBSensor::Set_ODR_When_Enabled( float odr )
 {
   LPS22HB_Odr_et new_odr;
 
@@ -348,24 +322,24 @@ LPS22HBStatusTypeDef LPS22HBSensor::SetODR_When_Enabled( float odr )
 
   if ( LPS22HB_Set_Odr( (void *)this, new_odr ) == LPS22HB_ERROR )
   {
-    return LPS22HB_STATUS_ERROR;
+    return 1;
   }
 
-  if ( GetODR( &Last_ODR ) == LPS22HB_STATUS_ERROR )
+  if ( Get_ODR( &Last_ODR ) == 1 )
   {
-    return LPS22HB_STATUS_ERROR;
+    return 1;
   }
 
-  return LPS22HB_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Set the LPS22HB sensor output data rate when disabled
  * @param odr the functional output data rate to be set
- * @retval LPS22HB_STATUS_OK in case of success
- * @retval LPS22HB_STATUS_ERROR in case of failure
+ * @retval 0 in case of success
+ * @retval 1 in case of failure
  */
-LPS22HBStatusTypeDef LPS22HBSensor::SetODR_When_Disabled( float odr )
+int LPS22HBSensor::Set_ODR_When_Disabled( float odr )
 {
   Last_ODR = ( odr <=  1.0f ) ? 1.0f
            : ( odr <= 10.0f ) ? 10.0f
@@ -373,7 +347,7 @@ LPS22HBStatusTypeDef LPS22HBSensor::SetODR_When_Disabled( float odr )
            : ( odr <= 50.0f ) ? 50.0f
            :                    75.0f;
 
-  return LPS22HB_STATUS_OK;
+  return 0;
 }
 
 
@@ -381,36 +355,36 @@ LPS22HBStatusTypeDef LPS22HBSensor::SetODR_When_Disabled( float odr )
  * @brief Read the data from register
  * @param reg register address
  * @param data register data
- * @retval LPS22HB_STATUS_OK in case of success
- * @retval LPS22HB_STATUS_ERROR in case of failure
+ * @retval 0 in case of success
+ * @retval 1 in case of failure
  */
-LPS22HBStatusTypeDef LPS22HBSensor::ReadReg( uint8_t reg, uint8_t *data )
+int LPS22HBSensor::ReadReg( uint8_t reg, uint8_t *data )
 {
 
   if ( LPS22HB_ReadReg( (void *)this, reg, 1, data ) == LPS22HB_ERROR )
   {
-    return LPS22HB_STATUS_ERROR;
+    return 1;
   }
 
-  return LPS22HB_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Write the data to register
  * @param reg register address
  * @param data register data
- * @retval LPS22HB_STATUS_OK in case of success
- * @retval LPS22HB_STATUS_ERROR in case of failure
+ * @retval 0 in case of success
+ * @retval 1 in case of failure
  */
-LPS22HBStatusTypeDef LPS22HBSensor::WriteReg( uint8_t reg, uint8_t data )
+int LPS22HBSensor::WriteReg( uint8_t reg, uint8_t data )
 {
 
   if ( LPS22HB_WriteReg( (void *)this, reg, 1, &data ) == LPS22HB_ERROR )
   {
-    return LPS22HB_STATUS_ERROR;
+    return 1;
   }
 
-  return LPS22HB_STATUS_OK;
+  return 0;
 }
 
 

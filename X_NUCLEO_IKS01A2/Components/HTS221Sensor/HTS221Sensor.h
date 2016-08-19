@@ -46,37 +46,32 @@
 
 #include "DevI2C.h"
 #include "HTS221_Driver.h"
+#include "HumiditySensor.h"
+#include "TempSensor.h"
 
-
-/* Typedefs ------------------------------------------------------------------*/
-typedef enum
-{
-  HTS221_STATUS_OK = 0,
-  HTS221_STATUS_ERROR,
-  HTS221_STATUS_TIMEOUT,
-  HTS221_STATUS_NOT_IMPLEMENTED
-} HTS221StatusTypeDef;
 
 /* Class Declaration ---------------------------------------------------------*/
 
 /**
  * Abstract class of an HTS221 Humidity and Temperature sensor.
  */
-class HTS221Sensor
+class HTS221Sensor : public HumiditySensor, public TempSensor
 {
   public:
-    HTS221Sensor                       (DevI2C &i2c);
-    HTS221Sensor                       (DevI2C &i2c, uint8_t address);
-    HTS221StatusTypeDef Enable         (void);
-    HTS221StatusTypeDef Disable        (void);
-    HTS221StatusTypeDef ReadID         (uint8_t *ht_id);
-    HTS221StatusTypeDef Reset          (void);
-    HTS221StatusTypeDef GetHumidity    (float *pfData);
-    HTS221StatusTypeDef GetTemperature (float *pfData);
-    HTS221StatusTypeDef GetODR         (float *odr);
-    HTS221StatusTypeDef SetODR         (float odr);
-    HTS221StatusTypeDef ReadReg        (uint8_t reg, uint8_t *data);
-    HTS221StatusTypeDef WriteReg       (uint8_t reg, uint8_t data);
+
+    HTS221Sensor(DevI2C &i2c);
+    HTS221Sensor(DevI2C &i2c, uint8_t address);
+    virtual int Init(void *init);
+    virtual int ReadID(uint8_t *id);
+    virtual int GetHumidity(float *pfData);
+    virtual int GetTemperature(float *pfData);
+    int Enable(void);
+    int Disable(void);
+    int Reset(void);
+    int Get_ODR(float *odr);
+    int Set_ODR(float odr);
+    int ReadReg(uint8_t reg, uint8_t *data);
+    int WriteReg(uint8_t reg, uint8_t data);
     /**
      * @brief Utility function to read data.
      * @param  pBuffer: pointer to data to be read.
@@ -108,6 +103,7 @@ class HTS221Sensor
     
     /* Configuration */
     uint8_t address;
+
 };
 
 #ifdef __cplusplus

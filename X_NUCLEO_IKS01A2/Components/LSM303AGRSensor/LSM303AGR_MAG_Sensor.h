@@ -46,15 +46,7 @@
 
 #include "DevI2C.h"
 #include "LSM303AGR_MAG_driver.h"
-
-/* Typedefs ------------------------------------------------------------------*/
-typedef enum
-{
-  LSM303AGR_MAG_STATUS_OK = 0,
-  LSM303AGR_MAG_STATUS_ERROR,
-  LSM303AGR_MAG_STATUS_TIMEOUT,
-  LSM303AGR_MAG_STATUS_NOT_IMPLEMENTED
-} LSM303AGR_MAG_StatusTypeDef;
+#include "MagneticSensor.h"
 
 
 /* Class Declaration ---------------------------------------------------------*/
@@ -66,20 +58,21 @@ typedef enum
 class LSM303AGR_MAG_Sensor
 {
   public:
-    LSM303AGR_MAG_Sensor                       (DevI2C &i2c);
-    LSM303AGR_MAG_Sensor                       (DevI2C &i2c, uint8_t address);
-    LSM303AGR_MAG_StatusTypeDef Enable         (void);
-    LSM303AGR_MAG_StatusTypeDef Disable        (void);
-    LSM303AGR_MAG_StatusTypeDef ReadID         (uint8_t *p_id);
-    LSM303AGR_MAG_StatusTypeDef GetAxes        (int32_t *pData);
-    LSM303AGR_MAG_StatusTypeDef GetSensitivity (float *pfData);
-    LSM303AGR_MAG_StatusTypeDef GetAxesRaw     (int16_t *pData);
-    LSM303AGR_MAG_StatusTypeDef GetODR         (float *odr);
-    LSM303AGR_MAG_StatusTypeDef SetODR         (float odr);
-    LSM303AGR_MAG_StatusTypeDef GetFS          (float *fullScale);
-    LSM303AGR_MAG_StatusTypeDef SetFS          (float fullScale);
-    LSM303AGR_MAG_StatusTypeDef ReadReg        (uint8_t reg, uint8_t *data);
-    LSM303AGR_MAG_StatusTypeDef WriteReg       (uint8_t reg, uint8_t data);
+    LSM303AGR_MAG_Sensor(DevI2C &i2c);
+    LSM303AGR_MAG_Sensor(DevI2C &i2c, uint8_t address);
+    virtual int Init(void *init);
+    virtual int ReadID(uint8_t *id);
+    virtual int Get_M_Axes(int32_t *pData);
+    virtual int Get_M_AxesRaw(int16_t *pData);
+    int Enable(void);
+    int Disable(void);
+    int Get_M_Sensitivity(float *pfData);
+    int Get_M_ODR(float *odr);
+    int Set_M_ODR(float odr);
+    int Get_M_FS(float *fullScale);
+    int Set_M_FS(float fullScale);
+    int ReadReg(uint8_t reg, uint8_t *data);
+    int WriteReg(uint8_t reg, uint8_t data);
     
     /**
      * @brief Utility function to read data.

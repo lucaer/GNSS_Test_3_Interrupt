@@ -47,6 +47,8 @@
 
 #include "DevI2C.h"
 #include "LSM6DSL_ACC_GYRO_driver.h"
+#include "MotionSensor.h"
+#include "GyroSensor.h"
 
 /* Defines -------------------------------------------------------------------*/
 
@@ -95,84 +97,75 @@
 #define LSM6DSL_TAP_DURATION_TIME_MID_HIGH  0x0C
 #define LSM6DSL_TAP_DURATION_TIME_HIGH      0x0F  /**< Highest value of wake up threshold */
 
-/* Typedefs ------------------------------------------------------------------*/
-typedef enum
-{
-  LSM6DSL_STATUS_OK = 0,
-  LSM6DSL_STATUS_ERROR,
-  LSM6DSL_STATUS_TIMEOUT,
-  LSM6DSL_STATUS_NOT_IMPLEMENTED
-} LSM6DSLStatusTypeDef;
-
-
 /* Class Declaration ---------------------------------------------------------*/
 
 /**
  * Abstract class of an LSM6DSL Inertial Measurement Unit (IMU) 6 axes
  * sensor.
  */
-class LSM6DSLSensor
+class LSM6DSLSensor : public MotionSensor, public GyroSensor
 {
   public:
-    LSM6DSLSensor                                        (DevI2C &i2c);
-    LSM6DSLSensor                                        (DevI2C &i2c, uint8_t address);
-    LSM6DSLStatusTypeDef Enable_X                        (void);
-    LSM6DSLStatusTypeDef Enable_G                        (void);
-    LSM6DSLStatusTypeDef Disable_X                       (void);
-    LSM6DSLStatusTypeDef Disable_G                       (void);
-    LSM6DSLStatusTypeDef ReadID                          (uint8_t *p_id);
-    LSM6DSLStatusTypeDef Get_X_Axes                      (int32_t *pData);
-    LSM6DSLStatusTypeDef Get_G_Axes                      (int32_t *pData);
-    LSM6DSLStatusTypeDef Get_X_Sensitivity               (float *pfData);
-    LSM6DSLStatusTypeDef Get_G_Sensitivity               (float *pfData);
-    LSM6DSLStatusTypeDef Get_X_AxesRaw                   (int16_t *pData);
-    LSM6DSLStatusTypeDef Get_G_AxesRaw                   (int16_t *pData);
-    LSM6DSLStatusTypeDef Get_X_ODR                       (float *odr);
-    LSM6DSLStatusTypeDef Get_G_ODR                       (float *odr);
-    LSM6DSLStatusTypeDef Set_X_ODR                       (float odr);
-    LSM6DSLStatusTypeDef Set_G_ODR                       (float odr);
-    LSM6DSLStatusTypeDef Get_X_FS                        (float *fullScale);
-    LSM6DSLStatusTypeDef Get_G_FS                        (float *fullScale);
-    LSM6DSLStatusTypeDef Set_X_FS                        (float fullScale);
-    LSM6DSLStatusTypeDef Set_G_FS                        (float fullScale);
-    LSM6DSLStatusTypeDef Enable_Free_Fall_Detection      (void);
-    LSM6DSLStatusTypeDef Disable_Free_Fall_Detection     (void);
-    LSM6DSLStatusTypeDef Get_Status_Free_Fall_Detection  (uint8_t *status);
-    LSM6DSLStatusTypeDef Set_Free_Fall_Threshold         (uint8_t thr);
-    LSM6DSLStatusTypeDef Enable_Pedometer                (void);
-    LSM6DSLStatusTypeDef Disable_Pedometer               (void);
-    LSM6DSLStatusTypeDef Get_Status_Pedometer            (uint8_t *status);
-    LSM6DSLStatusTypeDef Get_Step_Counter                (uint16_t *step_count);
-    LSM6DSLStatusTypeDef Reset_Step_Counter              (void);
-    LSM6DSLStatusTypeDef Set_Pedometer_Threshold         (uint8_t thr);
-    LSM6DSLStatusTypeDef Enable_Tilt_Detection           (void);
-    LSM6DSLStatusTypeDef Disable_Tilt_Detection          (void);
-    LSM6DSLStatusTypeDef Get_Status_Tilt_Detection       (uint8_t *status);
-    LSM6DSLStatusTypeDef Enable_Wake_Up_Detection        (void);
-    LSM6DSLStatusTypeDef Disable_Wake_Up_Detection       (void);
-    LSM6DSLStatusTypeDef Get_Status_Wake_Up_Detection    (uint8_t *status);
-    LSM6DSLStatusTypeDef Set_Wake_Up_Threshold           (uint8_t thr);
-    LSM6DSLStatusTypeDef Enable_Single_Tap_Detection     (void);
-    LSM6DSLStatusTypeDef Disable_Single_Tap_Detection    (void);
-    LSM6DSLStatusTypeDef Get_Status_Single_Tap_Detection (uint8_t *status);
-    LSM6DSLStatusTypeDef Enable_Double_Tap_Detection     (void);
-    LSM6DSLStatusTypeDef Disable_Double_Tap_Detection    (void);
-    LSM6DSLStatusTypeDef Get_Status_Double_Tap_Detection (uint8_t *status);
-    LSM6DSLStatusTypeDef Set_Tap_Threshold               (uint8_t thr);
-    LSM6DSLStatusTypeDef Set_Tap_Shock_Time              (uint8_t time);
-    LSM6DSLStatusTypeDef Set_Tap_Quiet_Time              (uint8_t time);
-    LSM6DSLStatusTypeDef Set_Tap_Duration_Time           (uint8_t time);
-    LSM6DSLStatusTypeDef Enable_6D_Orientation           (void);
-    LSM6DSLStatusTypeDef Disable_6D_Orientation          (void);
-    LSM6DSLStatusTypeDef Get_Status_6D_Orientation       (uint8_t *status);
-    LSM6DSLStatusTypeDef Get_6D_Orientation_XL           (uint8_t *xl);
-    LSM6DSLStatusTypeDef Get_6D_Orientation_XH           (uint8_t *xh);
-    LSM6DSLStatusTypeDef Get_6D_Orientation_YL           (uint8_t *yl);
-    LSM6DSLStatusTypeDef Get_6D_Orientation_YH           (uint8_t *yh);
-    LSM6DSLStatusTypeDef Get_6D_Orientation_ZL           (uint8_t *zl);
-    LSM6DSLStatusTypeDef Get_6D_Orientation_ZH           (uint8_t *zh);
-    LSM6DSLStatusTypeDef ReadReg                         (uint8_t reg, uint8_t *data);
-    LSM6DSLStatusTypeDef WriteReg                        (uint8_t reg, uint8_t data);
+    LSM6DSLSensor(DevI2C &i2c);
+    LSM6DSLSensor(DevI2C &i2c, uint8_t address);
+    virtual int Init(void *init);
+    virtual int ReadID(uint8_t *id);
+    virtual int Get_X_Axes(int32_t *pData);
+    virtual int Get_G_Axes(int32_t *pData);
+    virtual int Get_X_Sensitivity(float *pfData);
+    virtual int Get_G_Sensitivity(float *pfData);
+    virtual int Get_X_AxesRaw(int16_t *pData);
+    virtual int Get_G_AxesRaw(int16_t *pData);
+    virtual int Get_X_ODR(float *odr);
+    virtual int Get_G_ODR(float *odr);
+    virtual int Set_X_ODR(float odr);
+    virtual int Set_G_ODR(float odr);
+    virtual int Get_X_FS(float *fullScale);
+    virtual int Get_G_FS(float *fullScale);
+    virtual int Set_X_FS(float fullScale);
+    virtual int Set_G_FS(float fullScale);
+    int Enable_X(void);
+    int Enable_G(void);
+    int Disable_X(void);
+    int Disable_G(void);
+    int Enable_Free_Fall_Detection(void);
+    int Disable_Free_Fall_Detection(void);
+    int Get_Status_Free_Fall_Detection(uint8_t *status);
+    int Set_Free_Fall_Threshold(uint8_t thr);
+    int Enable_Pedometer(void);
+    int Disable_Pedometer(void);
+    int Get_Status_Pedometer(uint8_t *status);
+    int Get_Step_Counter(uint16_t *step_count);
+    int Reset_Step_Counter(void);
+    int Set_Pedometer_Threshold(uint8_t thr);
+    int Enable_Tilt_Detection(void);
+    int Disable_Tilt_Detection(void);
+    int Get_Status_Tilt_Detection(uint8_t *status);
+    int Enable_Wake_Up_Detection(void);
+    int Disable_Wake_Up_Detection(void);
+    int Get_Status_Wake_Up_Detection(uint8_t *status);
+    int Set_Wake_Up_Threshold(uint8_t thr);
+    int Enable_Single_Tap_Detection(void);
+    int Disable_Single_Tap_Detection(void);
+    int Get_Status_Single_Tap_Detection(uint8_t *status);
+    int Enable_Double_Tap_Detection(void);
+    int Disable_Double_Tap_Detection(void);
+    int Get_Status_Double_Tap_Detection(uint8_t *status);
+    int Set_Tap_Threshold(uint8_t thr);
+    int Set_Tap_Shock_Time(uint8_t time);
+    int Set_Tap_Quiet_Time(uint8_t time);
+    int Set_Tap_Duration_Time(uint8_t time);
+    int Enable_6D_Orientation(void);
+    int Disable_6D_Orientation(void);
+    int Get_Status_6D_Orientation(uint8_t *status);
+    int Get_6D_Orientation_XL(uint8_t *xl);
+    int Get_6D_Orientation_XH(uint8_t *xh);
+    int Get_6D_Orientation_YL(uint8_t *yl);
+    int Get_6D_Orientation_YH(uint8_t *yh);
+    int Get_6D_Orientation_ZL(uint8_t *zl);
+    int Get_6D_Orientation_ZH(uint8_t *zh);
+    int ReadReg(uint8_t reg, uint8_t *data);
+    int WriteReg(uint8_t reg, uint8_t data);
     
     /**
      * @brief Utility function to read data.
@@ -199,10 +192,10 @@ class LSM6DSLSensor
     }
 
   private:
-    LSM6DSLStatusTypeDef Set_X_ODR_When_Enabled(float odr);
-    LSM6DSLStatusTypeDef Set_G_ODR_When_Enabled(float odr);
-    LSM6DSLStatusTypeDef Set_X_ODR_When_Disabled(float odr);
-    LSM6DSLStatusTypeDef Set_G_ODR_When_Disabled(float odr);
+    int Set_X_ODR_When_Enabled(float odr);
+    int Set_G_ODR_When_Enabled(float odr);
+    int Set_X_ODR_When_Disabled(float odr);
+    int Set_G_ODR_When_Disabled(float odr);
 
     /* Helper classes. */
     DevI2C &dev_i2c;

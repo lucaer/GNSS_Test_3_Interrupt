@@ -46,37 +46,30 @@
 
 #include "DevI2C.h"
 #include "LPS22HB_Driver.h"
-
-/* Typedefs ------------------------------------------------------------------*/
-typedef enum
-{
-  LPS22HB_STATUS_OK = 0,
-  LPS22HB_STATUS_ERROR,
-  LPS22HB_STATUS_TIMEOUT,
-  LPS22HB_STATUS_NOT_IMPLEMENTED
-} LPS22HBStatusTypeDef;
-
+#include "PressureSensor.h"
+#include "TempSensor.h"
 
 /* Class Declaration ---------------------------------------------------------*/
 
 /**
  * Abstract class of an LPS22HB Pressure sensor.
  */
-class LPS22HBSensor
+class LPS22HBSensor : public PressureSensor, public TempSensor
 {
   public:
-    LPS22HBSensor                       (DevI2C &i2c);
-    LPS22HBSensor                       (DevI2C &i2c, uint8_t address);
-    LPS22HBStatusTypeDef Enable         (void);
-    LPS22HBStatusTypeDef Disable        (void);
-    LPS22HBStatusTypeDef ReadID         (uint8_t *ht_id);
-    LPS22HBStatusTypeDef Reset          (void);
-    LPS22HBStatusTypeDef GetPressure    (float *pfData);
-    LPS22HBStatusTypeDef GetTemperature (float *pfData);
-    LPS22HBStatusTypeDef GetODR         (float *odr);
-    LPS22HBStatusTypeDef SetODR         (float odr);
-    LPS22HBStatusTypeDef ReadReg        (uint8_t reg, uint8_t *data);
-    LPS22HBStatusTypeDef WriteReg       (uint8_t reg, uint8_t data);
+    LPS22HBSensor(DevI2C &i2c);
+    LPS22HBSensor(DevI2C &i2c, uint8_t address);
+    virtual int Init(void *init);
+    virtual int ReadID(uint8_t *id);
+    virtual int GetPressure(float *pfData);
+    virtual int GetTemperature(float *pfData);
+    int Enable(void);
+    int Disable(void);
+    int Reset(void);
+    int Get_ODR(float *odr);
+    int Set_ODR(float odr);
+    int ReadReg(uint8_t reg, uint8_t *data);
+    int WriteReg(uint8_t reg, uint8_t data);
     
     /**
      * @brief Utility function to read data.
@@ -103,8 +96,8 @@ class LPS22HBSensor
     }
 
   private:
-    LPS22HBStatusTypeDef SetODR_When_Enabled(float odr);
-    LPS22HBStatusTypeDef SetODR_When_Disabled(float odr);
+    int Set_ODR_When_Enabled(float odr);
+    int Set_ODR_When_Disabled(float odr);
 
     /* Helper classes. */
     DevI2C &dev_i2c;

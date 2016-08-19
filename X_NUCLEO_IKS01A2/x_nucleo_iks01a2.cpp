@@ -54,7 +54,11 @@ X_NUCLEO_IKS01A2::X_NUCLEO_IKS01A2(DevI2C *ext_i2c) : dev_i2c(ext_i2c),
     pt_sensor(new LPS22HBSensor(*dev_i2c)),
     acc_gyro(new LSM6DSLSensor(*dev_i2c))
 { 
-
+  ht_sensor->Init(NULL);
+  magnetometer->Init(NULL);
+  accelerometer->Init(NULL);
+  pt_sensor->Init(NULL);
+  acc_gyro->Init(NULL);
 }
 
 /**

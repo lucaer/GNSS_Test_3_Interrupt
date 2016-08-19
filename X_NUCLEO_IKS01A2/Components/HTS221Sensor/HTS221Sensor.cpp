@@ -52,24 +52,7 @@
  */
 HTS221Sensor::HTS221Sensor(DevI2C &i2c) : dev_i2c(i2c)
 {
-  address = HTS221_I2C_ADDRESS; 
-
-  /* Power down the device */
-  if ( HTS221_DeActivate( (void *)this ) == HTS221_ERROR )
-  {
-    return;
-  }
-
-  /* Enable BDU */
-  if ( HTS221_Set_BduMode( (void *)this, HTS221_ENABLE ) == HTS221_ERROR )
-  {
-    return;
-  }
-  
-  if(SetODR(1.0f) == HTS221_STATUS_ERROR)
-  {
-    return;
-  }
+  address = HTS221_I2C_ADDRESS;
 };
 
 
@@ -79,149 +62,166 @@ HTS221Sensor::HTS221Sensor(DevI2C &i2c) : dev_i2c(i2c)
  */
 HTS221Sensor::HTS221Sensor(DevI2C &i2c, uint8_t address) : dev_i2c(i2c), address(address)
 {
-    /* Power down the device */
+
+};
+
+/**
+ * @brief     Initializing the component.
+ * @param[in] init pointer to device specific initalization structure.
+ * @retval    "0" in case of success, an error code otherwise.
+ */
+int HTS221Sensor::Init(void *init)
+{
+  /* Power down the device */
   if ( HTS221_DeActivate( (void *)this ) == HTS221_ERROR )
   {
-    return;
+    return 1;
   }
 
   /* Enable BDU */
   if ( HTS221_Set_BduMode( (void *)this, HTS221_ENABLE ) == HTS221_ERROR )
   {
-    return;
+    return 1;
   }
   
-  if(SetODR(1.0f) == HTS221_STATUS_ERROR)
+  if(Set_ODR(1.0f) == 1)
   {
-    return;
+    return 1;
   }
-};
+  
+  return 0;
+}
 
 /**
  * @brief  Enable HTS221
- * @retval HTS221_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-HTS221StatusTypeDef HTS221Sensor::Enable(void)
+int HTS221Sensor::Enable(void)
 {
   /* Power up the device */
   if ( HTS221_Activate( (void *)this ) == HTS221_ERROR )
   {
-    return HTS221_STATUS_ERROR;
+    return 1;
   }
 
-  return HTS221_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Disable HTS221
- * @retval HTS221_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-HTS221StatusTypeDef HTS221Sensor::Disable(void)
+int HTS221Sensor::Disable(void)
 {
   /* Power up the device */
   if ( HTS221_DeActivate( (void *)this ) == HTS221_ERROR )
   {
-    return HTS221_STATUS_ERROR;
+    return 1;
   }
 
-  return HTS221_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read ID address of HTS221
- * @param  ht_id the pointer where the ID of the device is stored
- * @retval HTS221_STATUS_OK in case of success, an error code otherwise
+ * @param  id the pointer where the ID of the device is stored
+ * @retval 0 in case of success, an error code otherwise
  */
-HTS221StatusTypeDef HTS221Sensor::ReadID(uint8_t *ht_id)
+int HTS221Sensor::ReadID(uint8_t *id)
 {
+  if(!id)
+  { 
+    return 1;
+  }
+  
   /* Read WHO AM I register */
-  if ( HTS221_Get_DeviceID( (void *)this, ht_id ) == HTS221_ERROR )
+  if ( HTS221_Get_DeviceID( (void *)this, id ) == HTS221_ERROR )
   {
-    return HTS221_STATUS_ERROR;
+    return 1;
   }
 
-  return HTS221_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Reboot memory content of HTS221
  * @param  None
- * @retval HTS221_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-HTS221StatusTypeDef HTS221Sensor::Reset(void)
+int HTS221Sensor::Reset(void)
 {
     uint8_t tmpreg;
 
     /* Read CTRL_REG2 register */
-    if (ReadReg(HTS221_CTRL_REG2, &tmpreg) != HTS221_STATUS_OK)
+    if (ReadReg(HTS221_CTRL_REG2, &tmpreg) != 0)
     {
-      return HTS221_STATUS_ERROR;
+      return 1;
     }
 
     /* Enable or Disable the reboot memory */
     tmpreg |= (0x01 << HTS221_BOOT_BIT);
 
     /* Write value to MEMS CTRL_REG2 regsister */
-    if (WriteReg(HTS221_CTRL_REG2, tmpreg) != HTS221_STATUS_OK)
+    if (WriteReg(HTS221_CTRL_REG2, tmpreg) != 0)
     {
-      return HTS221_STATUS_ERROR;
+      return 1;
     }
     
-    return HTS221_STATUS_OK;
+    return 0;
 }
 
 /**
  * @brief  Read HTS221 output register, and calculate the humidity
  * @param  pfData the pointer to data output
- * @retval HTS221_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-HTS221StatusTypeDef HTS221Sensor::GetHumidity(float* pfData)
+int HTS221Sensor::GetHumidity(float* pfData)
 {
   uint16_t uint16data = 0;
 
   /* Read data from HTS221. */
   if ( HTS221_Get_Humidity( (void *)this, &uint16data ) == HTS221_ERROR )
   {
-    return HTS221_STATUS_ERROR;
+    return 1;
   }
 
   *pfData = ( float )uint16data / 10.0f;
 
-  return HTS221_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read HTS221 output register, and calculate the temperature
  * @param  pfData the pointer to data output
- * @retval HTS221_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-HTS221StatusTypeDef HTS221Sensor::GetTemperature(float* pfData)
+int HTS221Sensor::GetTemperature(float* pfData)
 {
   int16_t int16data = 0;
 
   /* Read data from HTS221. */
   if ( HTS221_Get_Temperature( (void *)this, &int16data ) == HTS221_ERROR )
   {
-    return HTS221_STATUS_ERROR;
+    return 1;
   }
 
   *pfData = ( float )int16data / 10.0f;
 
-  return HTS221_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Read HTS221 output register, and calculate the humidity
  * @param  odr the pointer to the output data rate
- * @retval HTS221_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-HTS221StatusTypeDef HTS221Sensor::GetODR(float* odr)
+int HTS221Sensor::Get_ODR(float* odr)
 {
   HTS221_Odr_et odr_low_level;
 
   if ( HTS221_Get_Odr( (void *)this, &odr_low_level ) == HTS221_ERROR )
   {
-    return HTS221_STATUS_ERROR;
+    return 1;
   }
 
   switch( odr_low_level )
@@ -240,18 +240,18 @@ HTS221StatusTypeDef HTS221Sensor::GetODR(float* odr)
       break;
     default                 :
       *odr = -1.0f;
-      return HTS221_STATUS_ERROR;
+      return 1;
   }
 
-  return HTS221_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief  Set ODR
  * @param  odr the output data rate to be set
- * @retval HTS221_STATUS_OK in case of success, an error code otherwise
+ * @retval 0 in case of success, an error code otherwise
  */
-HTS221StatusTypeDef HTS221Sensor::SetODR(float odr)
+int HTS221Sensor::Set_ODR(float odr)
 {
   HTS221_Odr_et new_odr;
 
@@ -261,10 +261,10 @@ HTS221StatusTypeDef HTS221Sensor::SetODR(float odr)
 
   if ( HTS221_Set_Odr( (void *)this, new_odr ) == HTS221_ERROR )
   {
-    return HTS221_STATUS_ERROR;
+    return 1;
   }
 
-  return HTS221_STATUS_OK;
+  return 0;
 }
 
 
@@ -272,36 +272,36 @@ HTS221StatusTypeDef HTS221Sensor::SetODR(float odr)
  * @brief Read the data from register
  * @param reg register address
  * @param data register data
- * @retval HTS221_STATUS_OK in case of success
- * @retval HTS221_STATUS_ERROR in case of failure
+ * @retval 0 in case of success
+ * @retval 1 in case of failure
  */
-HTS221StatusTypeDef HTS221Sensor::ReadReg( uint8_t reg, uint8_t *data )
+int HTS221Sensor::ReadReg( uint8_t reg, uint8_t *data )
 {
 
   if ( HTS221_ReadReg( (void *)this, reg, 1, data ) == HTS221_ERROR )
   {
-    return HTS221_STATUS_ERROR;
+    return 1;
   }
 
-  return HTS221_STATUS_OK;
+  return 0;
 }
 
 /**
  * @brief Write the data to register
  * @param reg register address
  * @param data register data
- * @retval HTS221_STATUS_OK in case of success
- * @retval HTS221_STATUS_ERROR in case of failure
+ * @retval 0 in case of success
+ * @retval 1 in case of failure
  */
-HTS221StatusTypeDef HTS221Sensor::WriteReg( uint8_t reg, uint8_t data )
+int HTS221Sensor::WriteReg( uint8_t reg, uint8_t data )
 {
 
   if ( HTS221_WriteReg( (void *)this, reg, 1, &data ) == HTS221_ERROR )
   {
-    return HTS221_STATUS_ERROR;
+    return 1;
   }
 
-  return HTS221_STATUS_OK;
+  return 0;
 }
 
 uint8_t HTS221_IO_Write( void *handle, uint8_t WriteAddr, uint8_t *pBuffer, uint16_t nBytesToWrite )

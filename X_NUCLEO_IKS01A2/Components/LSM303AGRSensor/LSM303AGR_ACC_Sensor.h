@@ -46,6 +46,7 @@
 
 #include "DevI2C.h"
 #include "LSM303AGR_ACC_driver.h"
+#include "MotionSensor.h"
 
 /* Defines -------------------------------------------------------------------*/
 #define LSM303AGR_ACC_SENSITIVITY_FOR_FS_2G_NORMAL_MODE               3.900f  /**< Sensitivity value for 2 g full scale and normal mode [mg/LSB] */
@@ -61,40 +62,30 @@
 #define LSM303AGR_ACC_SENSITIVITY_FOR_FS_16G_HIGH_RESOLUTION_MODE    11.720f  /**< Sensitivity value for 16 g full scale and high resolution mode [mg/LSB] */
 #define LSM303AGR_ACC_SENSITIVITY_FOR_FS_16G_LOW_POWER_MODE         187.580f  /**< Sensitivity value for 16 g full scale and low power mode [mg/LSB] */
 
-
-/* Typedefs ------------------------------------------------------------------*/
-typedef enum
-{
-  LSM303AGR_ACC_STATUS_OK = 0,
-  LSM303AGR_ACC_STATUS_ERROR,
-  LSM303AGR_ACC_STATUS_TIMEOUT,
-  LSM303AGR_ACC_STATUS_NOT_IMPLEMENTED
-} LSM303AGR_ACC_StatusTypeDef;
-
-
 /* Class Declaration ---------------------------------------------------------*/
 
 /**
  * Abstract class of an LSM303AGR Inertial Measurement Unit (IMU) 6 axes
  * sensor.
  */
-class LSM303AGR_ACC_Sensor
+class LSM303AGR_ACC_Sensor : public MotionSensor
 {
   public:
-    LSM303AGR_ACC_Sensor                       (DevI2C &i2c);
-    LSM303AGR_ACC_Sensor                       (DevI2C &i2c, uint8_t address);
-    LSM303AGR_ACC_StatusTypeDef Enable         (void);
-    LSM303AGR_ACC_StatusTypeDef Disable        (void);
-    LSM303AGR_ACC_StatusTypeDef ReadID         (uint8_t *p_id);
-    LSM303AGR_ACC_StatusTypeDef GetAxes        (int32_t *pData);
-    LSM303AGR_ACC_StatusTypeDef GetSensitivity (float *pfData);
-    LSM303AGR_ACC_StatusTypeDef GetAxesRaw     (int16_t *pData);
-    LSM303AGR_ACC_StatusTypeDef GetODR         (float *odr);
-    LSM303AGR_ACC_StatusTypeDef SetODR         (float odr);
-    LSM303AGR_ACC_StatusTypeDef GetFS          (float *fullScale);
-    LSM303AGR_ACC_StatusTypeDef SetFS          (float fullScale);
-    LSM303AGR_ACC_StatusTypeDef ReadReg        (uint8_t reg, uint8_t *data);
-    LSM303AGR_ACC_StatusTypeDef WriteReg       (uint8_t reg, uint8_t data);
+    LSM303AGR_ACC_Sensor(DevI2C &i2c);
+    LSM303AGR_ACC_Sensor(DevI2C &i2c, uint8_t address);
+    virtual int Init(void *init);
+    virtual int ReadID(uint8_t *id);
+    virtual int Get_X_Axes(int32_t *pData);
+    virtual int Get_X_AxesRaw(int16_t *pData);
+    virtual int Get_X_Sensitivity(float *pfData);
+    virtual int Get_X_ODR(float *odr);
+    virtual int Set_X_ODR(float odr);
+    virtual int Get_X_FS(float *fullScale);
+    virtual int Set_X_FS(float fullScale);
+    int Enable(void);
+    int Disable(void);
+    int ReadReg(uint8_t reg, uint8_t *data);
+    int WriteReg(uint8_t reg, uint8_t data);
     
     /**
      * @brief Utility function to read data.
@@ -121,11 +112,11 @@ class LSM303AGR_ACC_Sensor
     }
 
   private:
-    LSM303AGR_ACC_StatusTypeDef SetODR_When_Enabled(float odr);
-    LSM303AGR_ACC_StatusTypeDef SetODR_When_Disabled(float odr);
-    LSM303AGR_ACC_StatusTypeDef GetSensitivity_Normal_Mode( float *sensitivity );
-    LSM303AGR_ACC_StatusTypeDef GetSensitivity_LP_Mode( float *sensitivity );
-    LSM303AGR_ACC_StatusTypeDef GetSensitivity_HR_Mode( float *sensitivity );
+    int Set_X_ODR_When_Enabled(float odr);
+    int Set_X_ODR_When_Disabled(float odr);
+    int Get_X_Sensitivity_Normal_Mode(float *sensitivity );
+    int Get_X_Sensitivity_LP_Mode(float *sensitivity );
+    int Get_X_Sensitivity_HR_Mode(float *sensitivity );
 
     /* Helper classes. */
     DevI2C &dev_i2c;
