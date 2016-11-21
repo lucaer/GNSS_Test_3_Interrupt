@@ -953,35 +953,6 @@ int LSM6DSLSensor::Disable_Free_Fall_Detection(void)
 }
 
 /**
- * @brief  Get status of free fall detection
- * @param  status the pointer where the status of free fall detection is stored; 0 means no detection, 1 means detection happened
- * @retval 0 in case of success, an error code otherwise
-*/
-int LSM6DSLSensor::Get_Status_Free_Fall_Detection(uint8_t *status)
-{
-  LSM6DSL_ACC_GYRO_FF_EV_STATUS_t free_fall_status;
-  
-  if ( LSM6DSL_ACC_GYRO_R_FF_EV_STATUS( (void *)this, &free_fall_status ) == MEMS_ERROR )
-  {
-    return 1;
-  }
-  
-  switch( free_fall_status )
-  {
-    case LSM6DSL_ACC_GYRO_FF_EV_STATUS_DETECTED:
-      *status = 1;
-      break;
-    case LSM6DSL_ACC_GYRO_FF_EV_STATUS_NOT_DETECTED:
-      *status = 0;
-      break;
-    default:
-      return 1;
-  }
-  
-  return 0;
-}
-
-/**
  * @brief Set the free fall detection threshold for LSM6DSL accelerometer sensor
  * @param thr the threshold to be set
  * @retval 0 in case of success, an error code otherwise
@@ -1071,35 +1042,6 @@ int LSM6DSLSensor::Disable_Pedometer(void)
   if ( Set_Pedometer_Threshold(0x0) == 1 )
   {
     return 1;
-  }
-  
-  return 0;
-}
-
-/**
- * @brief Get the pedometer status for LSM6DSL accelerometer sensor
- * @param status the pointer to the pedometer status: 0 means no step detected, 1 means step detected
- * @retval 0 in case of success, an error code otherwise
- */
-int LSM6DSLSensor::Get_Status_Pedometer(uint8_t *status)
-{
-  LSM6DSL_ACC_GYRO_PEDO_EV_STATUS_t pedometer_status;
-  
-  if ( LSM6DSL_ACC_GYRO_R_PEDO_EV_STATUS( (void *)this, &pedometer_status ) == MEMS_ERROR )
-  {
-    return 1;
-  }
-  
-  switch( pedometer_status )
-  {
-    case LSM6DSL_ACC_GYRO_PEDO_EV_STATUS_DETECTED:
-      *status = 1;
-      break;
-    case LSM6DSL_ACC_GYRO_PEDO_EV_STATUS_NOT_DETECTED:
-      *status = 0;
-      break;
-    default:
-      return 1;
   }
   
   return 0;
@@ -1224,35 +1166,6 @@ int LSM6DSLSensor::Disable_Tilt_Detection(void)
 }
 
 /**
- * @brief Get the tilt detection status for LSM6DSL accelerometer sensor
- * @param status the pointer to the tilt detection status: 0 means no tilt detected, 1 means tilt detected
- * @retval 0 in case of success, an error code otherwise
- */
-int LSM6DSLSensor::Get_Status_Tilt_Detection(uint8_t *status)
-{
-  LSM6DSL_ACC_GYRO_TILT_EV_STATUS_t tilt_status;
-  
-  if ( LSM6DSL_ACC_GYRO_R_TILT_EV_STATUS( (void *)this, &tilt_status ) == MEMS_ERROR )
-  {
-    return 1;
-  }
-  
-  switch( tilt_status )
-  {
-    case LSM6DSL_ACC_GYRO_TILT_EV_STATUS_DETECTED:
-      *status = 1;
-      break;
-    case LSM6DSL_ACC_GYRO_TILT_EV_STATUS_NOT_DETECTED:
-      *status = 0;
-      break;
-    default:
-      return 1;
-  }
-  
-  return 0;
-}
-
-/**
  * @brief Enable the wake up detection for LSM6DSL accelerometer sensor
  * @note  This function sets the LSM6DSL accelerometer ODR to 416Hz and the LSM6DSL accelerometer full scale to 2g
  * @retval 0 in case of success, an error code otherwise
@@ -1326,35 +1239,6 @@ int LSM6DSLSensor::Disable_Wake_Up_Detection(void)
   if ( LSM6DSL_ACC_GYRO_W_WK_THS( (void *)this, 0x00 ) == MEMS_ERROR )
   {
     return 1;
-  }
-  
-  return 0;
-}
-
-/**
- * @brief Get the status of the wake up detection for LSM6DSL accelerometer sensor
- * @param status the pointer to the status of the wake up detection: 0 means no detection, 1 means detection happened
- * @retval 0 in case of success, an error code otherwise
- */
-int LSM6DSLSensor::Get_Status_Wake_Up_Detection(uint8_t *status)
-{
-  LSM6DSL_ACC_GYRO_WU_EV_STATUS_t wake_up_status;
-  
-  if ( LSM6DSL_ACC_GYRO_R_WU_EV_STATUS( (void *)this, &wake_up_status ) == MEMS_ERROR )
-  {
-    return 1;
-  }
-  
-  switch( wake_up_status )
-  {
-    case LSM6DSL_ACC_GYRO_WU_EV_STATUS_DETECTED:
-      *status = 1;
-      break;
-    case LSM6DSL_ACC_GYRO_WU_EV_STATUS_NOT_DETECTED:
-      *status = 0;
-      break;
-    default:
-      return 1;
   }
   
   return 0;
@@ -1505,37 +1389,6 @@ int LSM6DSLSensor::Disable_Single_Tap_Detection(void)
   if ( LSM6DSL_ACC_GYRO_W_TAP_X_EN( (void *)this, LSM6DSL_ACC_GYRO_TAP_X_EN_DISABLED ) == MEMS_ERROR )
   {
     return 1;
-  }
-  
-  return 0;
-}
-
-/**
- * @brief Get the single tap detection status for LSM6DSL accelerometer sensor
- * @param status the pointer to the single tap detection status: 0 means no single tap detected, 1 means single tap detected
- * @retval 0 in case of success, an error code otherwise
- */
-int LSM6DSLSensor::Get_Status_Single_Tap_Detection(uint8_t *status)
-{
-  LSM6DSL_ACC_GYRO_SINGLE_TAP_EV_STATUS_t tap_status;
-  
-  if ( LSM6DSL_ACC_GYRO_R_SINGLE_TAP_EV_STATUS( (void *)this, &tap_status ) == MEMS_ERROR )
-  {
-    return 1;
-  }
-  
-  switch( tap_status )
-  {
-    case LSM6DSL_ACC_GYRO_SINGLE_TAP_EV_STATUS_DETECTED:
-      *status = 1;
-      break;
-     
-    case LSM6DSL_ACC_GYRO_SINGLE_TAP_EV_STATUS_NOT_DETECTED:
-      *status = 0;
-      break;
-      
-    default:
-      return 1;
   }
   
   return 0;
@@ -1693,37 +1546,6 @@ int LSM6DSLSensor::Disable_Double_Tap_Detection(void)
 }
 
 /**
- * @brief Get the double tap detection status for LSM6DSL accelerometer sensor
- * @param status the pointer to the double tap detection status: 0 means no double tap detected, 1 means double tap detected
- * @retval 0 in case of success, an error code otherwise
- */
-int LSM6DSLSensor::Get_Status_Double_Tap_Detection(uint8_t *status)
-{
-  LSM6DSL_ACC_GYRO_DOUBLE_TAP_EV_STATUS_t tap_status;
-  
-  if ( LSM6DSL_ACC_GYRO_R_DOUBLE_TAP_EV_STATUS( (void *)this, &tap_status ) == MEMS_ERROR )
-  {
-    return 1;
-  }
-  
-  switch( tap_status )
-  {
-    case LSM6DSL_ACC_GYRO_DOUBLE_TAP_EV_STATUS_DETECTED:
-      *status = 1;
-      break;
-      
-    case LSM6DSL_ACC_GYRO_DOUBLE_TAP_EV_STATUS_NOT_DETECTED:
-      *status = 0;
-      break;
-      
-    default:
-      return 1;
-  }
-  
-  return 0;
-}
-
-/**
  * @brief Set the tap threshold for LSM6DSL accelerometer sensor
  * @param thr the threshold to be set
  * @retval 0 in case of success, an error code otherwise
@@ -1845,35 +1667,6 @@ int LSM6DSLSensor::Disable_6D_Orientation(void)
   if ( LSM6DSL_ACC_GYRO_W_SIXD_THS( (void *)this, LSM6DSL_ACC_GYRO_SIXD_THS_80_degree ) == MEMS_ERROR )
   {
     return 1;
-  }
-  
-  return 0;
-}
-
-/**
- * @brief Get the status of the 6D orientation detection for LSM6DSL accelerometer sensor
- * @param status the pointer to the status of the 6D orientation detection: 0 means no detection, 1 means detection happened
- * @retval 0 in case of success, an error code otherwise
- */
-int LSM6DSLSensor::Get_Status_6D_Orientation(uint8_t *status)
-{
-  LSM6DSL_ACC_GYRO_D6D_EV_STATUS_t status_raw;
-  
-  if ( LSM6DSL_ACC_GYRO_R_D6D_EV_STATUS( (void *)this, &status_raw ) == MEMS_ERROR )
-  {
-    return 1;
-  }
-  
-  switch( status_raw )
-  {
-    case LSM6DSL_ACC_GYRO_D6D_EV_STATUS_DETECTED:
-      *status = 1;
-      break;
-    case LSM6DSL_ACC_GYRO_D6D_EV_STATUS_NOT_DETECTED:
-      *status = 0;
-      break;
-    default:
-      return 1;
   }
   
   return 0;
@@ -2054,11 +1847,79 @@ int LSM6DSLSensor::Get_6D_Orientation_ZH(uint8_t *zh)
 }
 
 /**
+ * @brief Get the status of all hardware events for LSM6DSL accelerometer sensor
+ * @param status the pointer to the status of all hardware events
+ * @retval 0 in case of success, an error code otherwise
+ */
+int LSM6DSLSensor::Get_Event_Status(LSM6DSL_Event_Status_t *status)
+{
+  uint8_t Wake_Up_Src = 0, Tap_Src = 0, D6D_Src = 0, Func_Src = 0;
+
+  memset((void *)status, 0x0, sizeof(LSM6DSL_Event_Status_t));
+
+  if(ReadReg(LSM6DSL_ACC_GYRO_WAKE_UP_SRC, &Wake_Up_Src) != 0)
+  {
+    return 1;
+  }
+
+  if(ReadReg(LSM6DSL_ACC_GYRO_TAP_SRC, &Tap_Src) != 0)
+  {
+    return 1;
+  }
+
+  if(ReadReg(LSM6DSL_ACC_GYRO_D6D_SRC, &D6D_Src) != 0)
+  {
+    return 1;
+  }
+
+  if(ReadReg(LSM6DSL_ACC_GYRO_FUNC_SRC, &Func_Src) != 0)
+  {
+    return 1;
+  }
+
+  if((Wake_Up_Src & LSM6DSL_ACC_GYRO_FF_EV_STATUS_MASK))
+  {
+    status->FreeFallStatus = 1;  
+  }
+
+  if((Wake_Up_Src & LSM6DSL_ACC_GYRO_WU_EV_STATUS_MASK))
+  {
+    status->WakeUpStatus = 1;  
+  }
+
+  if((Tap_Src & LSM6DSL_ACC_GYRO_SINGLE_TAP_EV_STATUS_MASK))
+  {
+    status->TapStatus = 1;  
+  }
+
+  if((Tap_Src & LSM6DSL_ACC_GYRO_DOUBLE_TAP_EV_STATUS_MASK))
+  {
+    status->DoubleTapStatus = 1;  
+  }
+
+  if((D6D_Src & LSM6DSL_ACC_GYRO_D6D_EV_STATUS_MASK))
+  {
+    status->D6DOrientationStatus = 1;  
+  }
+
+  if((Func_Src & LSM6DSL_ACC_GYRO_PEDO_EV_STATUS_MASK))
+  {
+    status->StepStatus = 1;  
+  }
+
+  if((Func_Src & LSM6DSL_ACC_GYRO_TILT_EV_STATUS_MASK))
+  {
+    status->TiltStatus = 1;  
+  }
+
+  return 0;
+}
+
+/**
  * @brief Read the data from register
  * @param reg register address
  * @param data register data
- * @retval 0 in case of success
- * @retval 1 in case of failure
+ * @retval 0 in case of success, an error code otherwise
  */
 int LSM6DSLSensor::ReadReg( uint8_t reg, uint8_t *data )
 {
@@ -2075,8 +1936,7 @@ int LSM6DSLSensor::ReadReg( uint8_t reg, uint8_t *data )
  * @brief Write the data to register
  * @param reg register address
  * @param data register data
- * @retval 0 in case of success
- * @retval 1 in case of failure
+ * @retval 0 in case of success, an error code otherwise
  */
 int LSM6DSLSensor::WriteReg( uint8_t reg, uint8_t data )
 {

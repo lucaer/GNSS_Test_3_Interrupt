@@ -97,6 +97,19 @@
 #define LSM6DSL_TAP_DURATION_TIME_MID_HIGH  0x0C
 #define LSM6DSL_TAP_DURATION_TIME_HIGH      0x0F  /**< Highest value of wake up threshold */
 
+/* Typedefs ------------------------------------------------------------------*/
+
+typedef struct
+{
+  unsigned int FreeFallStatus : 1;
+  unsigned int TapStatus : 1;
+  unsigned int DoubleTapStatus : 1;
+  unsigned int WakeUpStatus : 1;
+  unsigned int StepStatus : 1;
+  unsigned int TiltStatus : 1;
+  unsigned int D6DOrientationStatus : 1;
+} LSM6DSL_Event_Status_t;
+
 /* Class Declaration ---------------------------------------------------------*/
 
 /**
@@ -130,40 +143,34 @@ class LSM6DSLSensor : public MotionSensor, public GyroSensor
     int Disable_G(void);
     int Enable_Free_Fall_Detection(void);
     int Disable_Free_Fall_Detection(void);
-    int Get_Status_Free_Fall_Detection(uint8_t *status);
     int Set_Free_Fall_Threshold(uint8_t thr);
     int Enable_Pedometer(void);
     int Disable_Pedometer(void);
-    int Get_Status_Pedometer(uint8_t *status);
     int Get_Step_Counter(uint16_t *step_count);
     int Reset_Step_Counter(void);
     int Set_Pedometer_Threshold(uint8_t thr);
     int Enable_Tilt_Detection(void);
     int Disable_Tilt_Detection(void);
-    int Get_Status_Tilt_Detection(uint8_t *status);
     int Enable_Wake_Up_Detection(void);
     int Disable_Wake_Up_Detection(void);
-    int Get_Status_Wake_Up_Detection(uint8_t *status);
     int Set_Wake_Up_Threshold(uint8_t thr);
     int Enable_Single_Tap_Detection(void);
     int Disable_Single_Tap_Detection(void);
-    int Get_Status_Single_Tap_Detection(uint8_t *status);
     int Enable_Double_Tap_Detection(void);
     int Disable_Double_Tap_Detection(void);
-    int Get_Status_Double_Tap_Detection(uint8_t *status);
     int Set_Tap_Threshold(uint8_t thr);
     int Set_Tap_Shock_Time(uint8_t time);
     int Set_Tap_Quiet_Time(uint8_t time);
     int Set_Tap_Duration_Time(uint8_t time);
     int Enable_6D_Orientation(void);
     int Disable_6D_Orientation(void);
-    int Get_Status_6D_Orientation(uint8_t *status);
     int Get_6D_Orientation_XL(uint8_t *xl);
     int Get_6D_Orientation_XH(uint8_t *xh);
     int Get_6D_Orientation_YL(uint8_t *yl);
     int Get_6D_Orientation_YH(uint8_t *yh);
     int Get_6D_Orientation_ZL(uint8_t *zl);
     int Get_6D_Orientation_ZH(uint8_t *zh);
+    int Get_Event_Status(LSM6DSL_Event_Status_t *status);
     int ReadReg(uint8_t reg, uint8_t *data);
     int WriteReg(uint8_t reg, uint8_t data);
     
