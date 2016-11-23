@@ -1202,8 +1202,8 @@ int LSM6DSLSensor::Enable_Wake_Up_Detection(void)
     return 1;
   }
   
-  /* INT1_WU setting */
-  if ( LSM6DSL_ACC_GYRO_W_WUEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_WU_ENABLED ) == MEMS_ERROR )
+  /* INT2_WU setting */
+  if ( LSM6DSL_ACC_GYRO_W_WUEvOnInt2( (void *)this, LSM6DSL_ACC_GYRO_INT2_WU_ENABLED ) == MEMS_ERROR )
   {
     return 1;
   }
@@ -1217,8 +1217,8 @@ int LSM6DSLSensor::Enable_Wake_Up_Detection(void)
  */
 int LSM6DSLSensor::Disable_Wake_Up_Detection(void)
 {
-  /* INT1_WU setting */
-  if ( LSM6DSL_ACC_GYRO_W_WUEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_WU_DISABLED ) == MEMS_ERROR )
+  /* INT2_WU setting */
+  if ( LSM6DSL_ACC_GYRO_W_WUEvOnInt2( (void *)this, LSM6DSL_ACC_GYRO_INT2_WU_DISABLED ) == MEMS_ERROR )
   {
     return 1;
   }
@@ -1853,7 +1853,7 @@ int LSM6DSLSensor::Get_6D_Orientation_ZH(uint8_t *zh)
  */
 int LSM6DSLSensor::Get_Event_Status(LSM6DSL_Event_Status_t *status)
 {
-  uint8_t Wake_Up_Src = 0, Tap_Src = 0, D6D_Src = 0, Func_Src = 0;
+  uint8_t Wake_Up_Src = 0, Tap_Src = 0, D6D_Src = 0, Func_Src = 0, Md1_Cfg = 0, Md2_Cfg = 0, Int1_Ctrl = 0;
 
   memset((void *)status, 0x0, sizeof(LSM6DSL_Event_Status_t));
 
@@ -1877,39 +1877,75 @@ int LSM6DSLSensor::Get_Event_Status(LSM6DSL_Event_Status_t *status)
     return 1;
   }
 
-  if((Wake_Up_Src & LSM6DSL_ACC_GYRO_FF_EV_STATUS_MASK))
+  if(ReadReg(LSM6DSL_ACC_GYRO_MD1_CFG, &Md1_Cfg ) != 0 )
   {
-    status->FreeFallStatus = 1;  
+    return 1;
   }
 
-  if((Wake_Up_Src & LSM6DSL_ACC_GYRO_WU_EV_STATUS_MASK))
+  if(ReadReg(LSM6DSL_ACC_GYRO_MD2_CFG, &Md2_Cfg ) != 0)
   {
-    status->WakeUpStatus = 1;  
+    return 1;
   }
 
-  if((Tap_Src & LSM6DSL_ACC_GYRO_SINGLE_TAP_EV_STATUS_MASK))
+  if(ReadReg(LSM6DSL_ACC_GYRO_INT1_CTRL, &Int1_Ctrl ) != 0)
   {
-    status->TapStatus = 1;  
+    return 1;
   }
 
-  if((Tap_Src & LSM6DSL_ACC_GYRO_DOUBLE_TAP_EV_STATUS_MASK))
+  if(Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_FF_MASK)
   {
-    status->DoubleTapStatus = 1;  
+    if((Wake_Up_Src & LSM6DSL_ACC_GYRO_FF_EV_STATUS_MASK))
+    {
+      status->FreeFallStatus = 1;  
+    }
   }
 
-  if((D6D_Src & LSM6DSL_ACC_GYRO_D6D_EV_STATUS_MASK))
+  if(Md2_Cfg & LSM6DSL_ACC_GYRO_INT2_WU_MASK)
   {
-    status->D6DOrientationStatus = 1;  
+    if((Wake_Up_Src & LSM6DSL_ACC_GYRO_WU_EV_STATUS_MASK))
+    {
+      status->WakeUpStatus = 1;  
+    }
   }
 
-  if((Func_Src & LSM6DSL_ACC_GYRO_PEDO_EV_STATUS_MASK))
+  if(Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_SINGLE_TAP_MASK)
   {
-    status->StepStatus = 1;  
+    if((Tap_Src & LSM6DSL_ACC_GYRO_SINGLE_TAP_EV_STATUS_MASK))
+    {
+      status->TapStatus = 1;  
+    }
   }
 
-  if((Func_Src & LSM6DSL_ACC_GYRO_TILT_EV_STATUS_MASK))
+  if(Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_TAP_MASK)
   {
-    status->TiltStatus = 1;  
+    if((Tap_Src & LSM6DSL_ACC_GYRO_DOUBLE_TAP_EV_STATUS_MASK))
+    {
+      status->DoubleTapStatus = 1;  
+    }
+  }
+
+  if(Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_6D_MASK)
+  {
+    if((D6D_Src & LSM6DSL_ACC_GYRO_D6D_EV_STATUS_MASK))
+    {
+      status->D6DOrientationStatus = 1;  
+    }
+  }
+
+  if(Int1_Ctrl & LSM6DSL_ACC_GYRO_INT1_PEDO_MASK)
+  {
+    if((Func_Src & LSM6DSL_ACC_GYRO_PEDO_EV_STATUS_MASK))
+    {
+      status->StepStatus = 1;  
+    }
+  }
+
+  if(Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_TILT_MASK)
+  {
+    if((Func_Src & LSM6DSL_ACC_GYRO_TILT_EV_STATUS_MASK))
+    {
+      status->TiltStatus = 1;  
+    }
   }
 
   return 0;
