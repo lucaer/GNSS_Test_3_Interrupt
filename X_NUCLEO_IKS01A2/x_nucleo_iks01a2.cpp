@@ -52,7 +52,7 @@ X_NUCLEO_IKS01A2::X_NUCLEO_IKS01A2(DevI2C *ext_i2c) : dev_i2c(ext_i2c),
     magnetometer(new LSM303AGR_MAG_Sensor(*dev_i2c)),
     accelerometer(new LSM303AGR_ACC_Sensor(*dev_i2c)),
     pt_sensor(new LPS22HBSensor(*dev_i2c)),
-    acc_gyro(new LSM6DSLSensor(*dev_i2c))
+    acc_gyro(new LSM6DSLSensor(*dev_i2c, IKS01A2_PIN_LSM6DSL_INT1, IKS01A2_PIN_LSM6DSL_INT2))
 { 
   ht_sensor->Init(NULL);
   magnetometer->Init(NULL);

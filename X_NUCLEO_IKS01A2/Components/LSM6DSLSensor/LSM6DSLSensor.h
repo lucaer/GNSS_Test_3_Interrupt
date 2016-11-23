@@ -119,8 +119,8 @@ typedef struct
 class LSM6DSLSensor : public MotionSensor, public GyroSensor
 {
   public:
-    LSM6DSLSensor(DevI2C &i2c);
-    LSM6DSLSensor(DevI2C &i2c, uint8_t address);
+    LSM6DSLSensor(DevI2C &i2c, PinName INT1_pin, PinName INT2_pin);
+    LSM6DSLSensor(DevI2C &i2c, PinName INT1_pin, PinName INT2_pin, uint8_t address);
     virtual int Init(void *init);
     virtual int ReadID(uint8_t *id);
     virtual int Get_X_Axes(int32_t *pData);
@@ -175,6 +175,66 @@ class LSM6DSLSensor : public MotionSensor, public GyroSensor
     int WriteReg(uint8_t reg, uint8_t data);
     
     /**
+     * @brief  Attaching an interrupt handler to the INT1 interrupt.
+     * @param  fptr An interrupt handler.
+     * @retval None.
+     */
+    void AttachINT1IRQ(void (*fptr)(void))
+    {
+        INT1_irq.rise(fptr);
+    }
+
+    /**
+     * @brief  Enabling the INT1 interrupt handling.
+     * @param  None.
+     * @retval None.
+     */
+    void EnableINT1IRQ(void)
+    {
+        INT1_irq.enable_irq();
+    }
+    
+    /**
+     * @brief  Disabling the INT1 interrupt handling.
+     * @param  None.
+     * @retval None.
+     */
+    void DisableINT1IRQ(void)
+    {
+        INT1_irq.disable_irq();
+    }
+    
+    /**
+     * @brief  Attaching an interrupt handler to the INT2 interrupt.
+     * @param  fptr An interrupt handler.
+     * @retval None.
+     */
+    void AttachINT2IRQ(void (*fptr)(void))
+    {
+        INT2_irq.rise(fptr);
+    }
+
+    /**
+     * @brief  Enabling the INT2 interrupt handling.
+     * @param  None.
+     * @retval None.
+     */
+    void EnableINT2IRQ(void)
+    {
+        INT2_irq.enable_irq();
+    }
+    
+    /**
+     * @brief  Disabling the INT2 interrupt handling.
+     * @param  None.
+     * @retval None.
+     */
+    void DisableINT2IRQ(void)
+    {
+        INT2_irq.disable_irq();
+    }
+    
+    /**
      * @brief Utility function to read data.
      * @param  pBuffer: pointer to data to be read.
      * @param  RegisterAddr: specifies internal address register to be read.
@@ -206,7 +266,10 @@ class LSM6DSLSensor : public MotionSensor, public GyroSensor
 
     /* Helper classes. */
     DevI2C &dev_i2c;
-    
+
+    InterruptIn INT1_irq;
+    InterruptIn INT2_irq;
+
     /* Configuration */
     uint8_t address;
     

@@ -51,7 +51,7 @@
  * @param i2c object of an helper class which handles the I2C peripheral
  * @param address the address of the component's instance
  */
-LSM6DSLSensor::LSM6DSLSensor(DevI2C &i2c) : dev_i2c(i2c)
+LSM6DSLSensor::LSM6DSLSensor(DevI2C &i2c, PinName INT1_pin, PinName INT2_pin) : dev_i2c(i2c), INT1_irq(INT1_pin), INT2_irq(INT2_pin)
 {
   address = LSM6DSL_ACC_GYRO_I2C_ADDRESS_HIGH; 
 };
@@ -60,7 +60,7 @@ LSM6DSLSensor::LSM6DSLSensor(DevI2C &i2c) : dev_i2c(i2c)
  * @param i2c object of an helper class which handles the I2C peripheral
  * @param address the address of the component's instance
  */
-LSM6DSLSensor::LSM6DSLSensor(DevI2C &i2c, uint8_t address) : dev_i2c(i2c), address(address)
+LSM6DSLSensor::LSM6DSLSensor(DevI2C &i2c, PinName INT1_pin, PinName INT2_pin, uint8_t address) : dev_i2c(i2c), INT1_irq(INT1_pin), INT2_irq(INT2_pin), address(address)
 {
 
 };
