@@ -99,6 +99,12 @@
 
 /* Typedefs ------------------------------------------------------------------*/
 
+typedef enum
+{
+  LSM6DSL_INT1_PIN,
+  LSM6DSL_INT2_PIN
+} LSM6DSL_Interrupt_Pin_t;
+
 typedef struct
 {
   unsigned int FreeFallStatus : 1;
@@ -142,6 +148,7 @@ class LSM6DSLSensor : public MotionSensor, public GyroSensor
     int Disable_X(void);
     int Disable_G(void);
     int Enable_Free_Fall_Detection(void);
+    int Enable_Free_Fall_Detection(LSM6DSL_Interrupt_Pin_t pin);
     int Disable_Free_Fall_Detection(void);
     int Set_Free_Fall_Threshold(uint8_t thr);
     int Enable_Pedometer(void);
@@ -150,19 +157,24 @@ class LSM6DSLSensor : public MotionSensor, public GyroSensor
     int Reset_Step_Counter(void);
     int Set_Pedometer_Threshold(uint8_t thr);
     int Enable_Tilt_Detection(void);
+    int Enable_Tilt_Detection(LSM6DSL_Interrupt_Pin_t pin);
     int Disable_Tilt_Detection(void);
     int Enable_Wake_Up_Detection(void);
+    int Enable_Wake_Up_Detection(LSM6DSL_Interrupt_Pin_t pin);
     int Disable_Wake_Up_Detection(void);
     int Set_Wake_Up_Threshold(uint8_t thr);
     int Enable_Single_Tap_Detection(void);
+    int Enable_Single_Tap_Detection(LSM6DSL_Interrupt_Pin_t pin);
     int Disable_Single_Tap_Detection(void);
     int Enable_Double_Tap_Detection(void);
+    int Enable_Double_Tap_Detection(LSM6DSL_Interrupt_Pin_t pin);
     int Disable_Double_Tap_Detection(void);
     int Set_Tap_Threshold(uint8_t thr);
     int Set_Tap_Shock_Time(uint8_t time);
     int Set_Tap_Quiet_Time(uint8_t time);
     int Set_Tap_Duration_Time(uint8_t time);
     int Enable_6D_Orientation(void);
+    int Enable_6D_Orientation(LSM6DSL_Interrupt_Pin_t pin);
     int Disable_6D_Orientation(void);
     int Get_6D_Orientation_XL(uint8_t *xl);
     int Get_6D_Orientation_XH(uint8_t *xh);

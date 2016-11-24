@@ -861,6 +861,17 @@ int LSM6DSLSensor::Set_G_FS(float fullScale)
 */
 int LSM6DSLSensor::Enable_Free_Fall_Detection(void)
 {
+  return Enable_Free_Fall_Detection(LSM6DSL_INT1_PIN);
+}
+
+/**
+ * @brief  Enable free fall detection
+ * @param pin the interrupt pin to be used
+ * @note  This function sets the LSM6DSL accelerometer ODR to 416Hz and the LSM6DSL accelerometer full scale to 2g
+ * @retval 0 in case of success, an error code otherwise
+*/
+int LSM6DSLSensor::Enable_Free_Fall_Detection(LSM6DSL_Interrupt_Pin_t pin)
+{
   /* Output Data Rate selection */
   if(Set_X_ODR(416.0f) == 1)
   {
@@ -909,9 +920,24 @@ int LSM6DSLSensor::Enable_Free_Fall_Detection(void)
     return 1;
   }
   
-  /* INT1_FF setting */
-  if ( LSM6DSL_ACC_GYRO_W_FFEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_FF_ENABLED ) == MEMS_ERROR )
+  /* Enable free fall event on either INT1 or INT2 pin */
+  switch (pin)
   {
+  case LSM6DSL_INT1_PIN:
+    if ( LSM6DSL_ACC_GYRO_W_FFEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_FF_ENABLED ) == MEMS_ERROR )
+    {
+      return 1;
+    }
+    break;
+
+  case LSM6DSL_INT2_PIN:
+    if ( LSM6DSL_ACC_GYRO_W_FFEvOnInt2( (void *)this, LSM6DSL_ACC_GYRO_INT2_FF_ENABLED ) == MEMS_ERROR )
+    {
+      return 1;
+    }
+    break;
+
+  default:
     return 1;
   }
   
@@ -925,8 +951,14 @@ int LSM6DSLSensor::Enable_Free_Fall_Detection(void)
 */
 int LSM6DSLSensor::Disable_Free_Fall_Detection(void)
 {
-  /* INT1_FF setting */
+  /* Disable free fall event on INT1 pin */
   if ( LSM6DSL_ACC_GYRO_W_FFEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_FF_DISABLED ) == MEMS_ERROR )
+  {
+    return 1;
+  }
+  
+  /* Disable free fall event on INT2 pin */
+  if ( LSM6DSL_ACC_GYRO_W_FFEvOnInt2( (void *)this, LSM6DSL_ACC_GYRO_INT2_FF_DISABLED ) == MEMS_ERROR )
   {
     return 1;
   }
@@ -1104,6 +1136,17 @@ int LSM6DSLSensor::Set_Pedometer_Threshold(uint8_t thr)
  * @retval 0 in case of success, an error code otherwise
  */
 int LSM6DSLSensor::Enable_Tilt_Detection(void)
+{ 
+  return Enable_Tilt_Detection(LSM6DSL_INT1_PIN);
+}
+
+/**
+ * @brief Enable the tilt detection for LSM6DSL accelerometer sensor
+ * @param pin the interrupt pin to be used
+ * @note  This function sets the LSM6DSL accelerometer ODR to 26Hz and the LSM6DSL accelerometer full scale to 2g
+ * @retval 0 in case of success, an error code otherwise
+ */
+int LSM6DSLSensor::Enable_Tilt_Detection(LSM6DSL_Interrupt_Pin_t pin)
 {
   /* Output Data Rate selection */
   if( Set_X_ODR(26.0f) == 1 )
@@ -1128,13 +1171,28 @@ int LSM6DSLSensor::Enable_Tilt_Detection(void)
   {
     return 1;
   }
-  
-  /* Enable tilt event on INT1. */
-  if ( LSM6DSL_ACC_GYRO_W_TiltEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_TILT_ENABLED ) == MEMS_ERROR )
+
+  /* Enable tilt detection on either INT1 or INT2 pin */
+  switch (pin)
   {
+  case LSM6DSL_INT1_PIN:
+    if ( LSM6DSL_ACC_GYRO_W_TiltEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_TILT_ENABLED ) == MEMS_ERROR )
+    {
+      return 1;
+    }
+    break;
+
+  case LSM6DSL_INT2_PIN:
+    if ( LSM6DSL_ACC_GYRO_W_TiltEvOnInt2( (void *)this, LSM6DSL_ACC_GYRO_INT2_TILT_ENABLED ) == MEMS_ERROR )
+    {
+      return 1;
+    }
+    break;
+
+  default:
     return 1;
   }
-  
+
   return 0;
 }
 
@@ -1150,6 +1208,12 @@ int LSM6DSLSensor::Disable_Tilt_Detection(void)
     return 1;
   }
 
+  /* Disable tilt event on INT2. */
+  if ( LSM6DSL_ACC_GYRO_W_TiltEvOnInt2( (void *)this, LSM6DSL_ACC_GYRO_INT2_TILT_DISABLED ) == MEMS_ERROR )
+  {
+    return 1;
+  }
+  
   /* Disable tilt calculation. */
   if ( LSM6DSL_ACC_GYRO_W_TILT( (void *)this, LSM6DSL_ACC_GYRO_TILT_DISABLED ) == MEMS_ERROR )
   {
@@ -1171,6 +1235,17 @@ int LSM6DSLSensor::Disable_Tilt_Detection(void)
  * @retval 0 in case of success, an error code otherwise
  */
 int LSM6DSLSensor::Enable_Wake_Up_Detection(void)
+{
+  return Enable_Wake_Up_Detection(LSM6DSL_INT2_PIN);
+}
+
+/**
+ * @brief Enable the wake up detection for LSM6DSL accelerometer sensor
+ * @param pin the interrupt pin to be used
+ * @note  This function sets the LSM6DSL accelerometer ODR to 416Hz and the LSM6DSL accelerometer full scale to 2g
+ * @retval 0 in case of success, an error code otherwise
+ */
+int LSM6DSLSensor::Enable_Wake_Up_Detection(LSM6DSL_Interrupt_Pin_t pin)
 {
   /* Output Data Rate selection */
   if( Set_X_ODR(416.0f) == 1 )
@@ -1201,10 +1276,25 @@ int LSM6DSLSensor::Enable_Wake_Up_Detection(void)
   {
     return 1;
   }
-  
-  /* INT2_WU setting */
-  if ( LSM6DSL_ACC_GYRO_W_WUEvOnInt2( (void *)this, LSM6DSL_ACC_GYRO_INT2_WU_ENABLED ) == MEMS_ERROR )
+
+  /* Enable wake up detection on either INT1 or INT2 pin */
+  switch (pin)
   {
+  case LSM6DSL_INT1_PIN:
+    if ( LSM6DSL_ACC_GYRO_W_WUEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_WU_ENABLED ) == MEMS_ERROR )
+    {
+      return 1;
+    }
+    break;
+
+  case LSM6DSL_INT2_PIN:
+    if ( LSM6DSL_ACC_GYRO_W_WUEvOnInt2( (void *)this, LSM6DSL_ACC_GYRO_INT2_WU_ENABLED ) == MEMS_ERROR )
+    {
+      return 1;
+    }
+    break;
+
+  default:
     return 1;
   }
   
@@ -1217,7 +1307,13 @@ int LSM6DSLSensor::Enable_Wake_Up_Detection(void)
  */
 int LSM6DSLSensor::Disable_Wake_Up_Detection(void)
 {
-  /* INT2_WU setting */
+  /* Disable wake up event on INT1 */
+  if ( LSM6DSL_ACC_GYRO_W_WUEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_WU_DISABLED ) == MEMS_ERROR )
+  {
+    return 1;
+  }
+
+  /* Disable wake up event on INT2 */
   if ( LSM6DSL_ACC_GYRO_W_WUEvOnInt2( (void *)this, LSM6DSL_ACC_GYRO_INT2_WU_DISABLED ) == MEMS_ERROR )
   {
     return 1;
@@ -1265,6 +1361,17 @@ int LSM6DSLSensor::Set_Wake_Up_Threshold(uint8_t thr)
  * @retval 0 in case of success, an error code otherwise
  */
 int LSM6DSLSensor::Enable_Single_Tap_Detection(void)
+{
+  return Enable_Single_Tap_Detection(LSM6DSL_INT1_PIN);
+}
+
+/**
+ * @brief Enable the single tap detection for LSM6DSL accelerometer sensor
+ * @param pin the interrupt pin to be used
+ * @note  This function sets the LSM6DSL accelerometer ODR to 416Hz and the LSM6DSL accelerometer full scale to 2g
+ * @retval 0 in case of success, an error code otherwise
+ */
+int LSM6DSLSensor::Enable_Single_Tap_Detection(LSM6DSL_Interrupt_Pin_t pin)
 {
   /* Output Data Rate selection */
   if( Set_X_ODR(416.0f) == 1 )
@@ -1324,9 +1431,24 @@ int LSM6DSLSensor::Enable_Single_Tap_Detection(void)
     return 1;
   }
   
-  /* Enable single tap interrupt on INT1 pin. */
-  if ( LSM6DSL_ACC_GYRO_W_SingleTapOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_SINGLE_TAP_ENABLED ) == MEMS_ERROR )
+  /* Enable single tap on either INT1 or INT2 pin */
+  switch (pin)
   {
+  case LSM6DSL_INT1_PIN:
+    if ( LSM6DSL_ACC_GYRO_W_SingleTapOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_SINGLE_TAP_ENABLED ) == MEMS_ERROR )
+    {
+      return 1;
+    }
+    break;
+
+  case LSM6DSL_INT2_PIN:
+    if ( LSM6DSL_ACC_GYRO_W_SingleTapOnInt2( (void *)this, LSM6DSL_ACC_GYRO_INT2_SINGLE_TAP_ENABLED ) == MEMS_ERROR )
+    {
+      return 1;
+    }
+    break;
+
+  default:
     return 1;
   }
   
@@ -1341,6 +1463,12 @@ int LSM6DSLSensor::Disable_Single_Tap_Detection(void)
 {
   /* Disable single tap interrupt on INT1 pin. */
   if ( LSM6DSL_ACC_GYRO_W_SingleTapOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_SINGLE_TAP_DISABLED ) == MEMS_ERROR )
+  {
+    return 1;
+  }
+  
+  /* Disable single tap interrupt on INT2 pin. */
+  if ( LSM6DSL_ACC_GYRO_W_SingleTapOnInt2( (void *)this, LSM6DSL_ACC_GYRO_INT2_SINGLE_TAP_DISABLED ) == MEMS_ERROR )
   {
     return 1;
   }
@@ -1400,6 +1528,17 @@ int LSM6DSLSensor::Disable_Single_Tap_Detection(void)
  * @retval 0 in case of success, an error code otherwise
  */
 int LSM6DSLSensor::Enable_Double_Tap_Detection(void)
+{
+  return Enable_Double_Tap_Detection(LSM6DSL_INT1_PIN);
+}
+
+/**
+ * @brief Enable the double tap detection for LSM6DSL accelerometer sensor
+ * @param pin the interrupt pin to be used
+ * @note  This function sets the LSM6DSL accelerometer ODR to 416Hz and the LSM6DSL accelerometer full scale to 2g
+ * @retval 0 in case of success, an error code otherwise
+ */
+int LSM6DSLSensor::Enable_Double_Tap_Detection(LSM6DSL_Interrupt_Pin_t pin)
 {
   /* Output Data Rate selection */
   if( Set_X_ODR(416.0f) == 1 )
@@ -1467,9 +1606,24 @@ int LSM6DSLSensor::Enable_Double_Tap_Detection(void)
     return 1;
   }
   
-  /* Enable double tap interrupt on INT1 pin. */
-  if ( LSM6DSL_ACC_GYRO_W_TapEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_TAP_ENABLED ) == MEMS_ERROR )
+  /* Enable double tap on either INT1 or INT2 pin */
+  switch (pin)
   {
+  case LSM6DSL_INT1_PIN:
+    if ( LSM6DSL_ACC_GYRO_W_TapEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_TAP_ENABLED ) == MEMS_ERROR )
+    {
+      return 1;
+    }
+    break;
+
+  case LSM6DSL_INT2_PIN:
+    if ( LSM6DSL_ACC_GYRO_W_TapEvOnInt2( (void *)this, LSM6DSL_ACC_GYRO_INT2_TAP_ENABLED ) == MEMS_ERROR )
+    {
+      return 1;
+    }
+    break;
+
+  default:
     return 1;
   }
   
@@ -1484,6 +1638,12 @@ int LSM6DSLSensor::Disable_Double_Tap_Detection(void)
 {
   /* Disable double tap interrupt on INT1 pin. */
   if ( LSM6DSL_ACC_GYRO_W_TapEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_TAP_DISABLED ) == MEMS_ERROR )
+  {
+    return 1;
+  }
+  
+  /* Disable double tap interrupt on INT2 pin. */
+  if ( LSM6DSL_ACC_GYRO_W_TapEvOnInt2( (void *)this, LSM6DSL_ACC_GYRO_INT2_TAP_DISABLED ) == MEMS_ERROR )
   {
     return 1;
   }
@@ -1612,6 +1772,17 @@ int LSM6DSLSensor::Set_Tap_Duration_Time(uint8_t time)
  */
 int LSM6DSLSensor::Enable_6D_Orientation(void)
 {
+  return Enable_6D_Orientation(LSM6DSL_INT1_PIN);
+}
+
+/**
+ * @brief Enable the 6D orientation detection for LSM6DSL accelerometer sensor
+ * @param pin the interrupt pin to be used
+ * @note  This function sets the LSM6DSL accelerometer ODR to 416Hz and the LSM6DSL accelerometer full scale to 2g
+ * @retval 0 in case of success, an error code otherwise
+ */
+int LSM6DSLSensor::Enable_6D_Orientation(LSM6DSL_Interrupt_Pin_t pin)
+{
   /* Output Data Rate selection */
   if( Set_X_ODR(416.0f) == 1 )
   {
@@ -1636,9 +1807,24 @@ int LSM6DSLSensor::Enable_6D_Orientation(void)
     return 1;
   }
   
-  /* INT1_6D setting. */
-  if ( LSM6DSL_ACC_GYRO_W_6DEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_6D_ENABLED ) == MEMS_ERROR )
+  /* Enable 6D orientation on either INT1 or INT2 pin */
+  switch (pin)
   {
+  case LSM6DSL_INT1_PIN:
+    if ( LSM6DSL_ACC_GYRO_W_6DEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_6D_ENABLED ) == MEMS_ERROR )
+    {
+      return 1;
+    }
+    break;
+
+  case LSM6DSL_INT2_PIN:
+    if ( LSM6DSL_ACC_GYRO_W_6DEvOnInt2( (void *)this, LSM6DSL_ACC_GYRO_INT2_6D_ENABLED ) == MEMS_ERROR )
+    {
+      return 1;
+    }
+    break;
+
+  default:
     return 1;
   }
   
@@ -1651,8 +1837,14 @@ int LSM6DSLSensor::Enable_6D_Orientation(void)
  */
 int LSM6DSLSensor::Disable_6D_Orientation(void)
 {
-  /* INT1_6D setting. */
+  /* Disable 6D orientation interrupt on INT1 pin. */
   if ( LSM6DSL_ACC_GYRO_W_6DEvOnInt1( (void *)this, LSM6DSL_ACC_GYRO_INT1_6D_DISABLED ) == MEMS_ERROR )
+  {
+    return 1;
+  }
+  
+  /* Disable 6D orientation interrupt on INT2 pin. */
+  if ( LSM6DSL_ACC_GYRO_W_6DEvOnInt2( (void *)this, LSM6DSL_ACC_GYRO_INT2_6D_DISABLED ) == MEMS_ERROR )
   {
     return 1;
   }
@@ -1892,7 +2084,7 @@ int LSM6DSLSensor::Get_Event_Status(LSM6DSL_Event_Status_t *status)
     return 1;
   }
 
-  if(Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_FF_MASK)
+  if((Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_FF_MASK) || (Md2_Cfg & LSM6DSL_ACC_GYRO_INT2_FF_MASK))
   {
     if((Wake_Up_Src & LSM6DSL_ACC_GYRO_FF_EV_STATUS_MASK))
     {
@@ -1900,7 +2092,7 @@ int LSM6DSLSensor::Get_Event_Status(LSM6DSL_Event_Status_t *status)
     }
   }
 
-  if(Md2_Cfg & LSM6DSL_ACC_GYRO_INT2_WU_MASK)
+  if((Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_WU_MASK) || (Md2_Cfg & LSM6DSL_ACC_GYRO_INT2_WU_MASK))
   {
     if((Wake_Up_Src & LSM6DSL_ACC_GYRO_WU_EV_STATUS_MASK))
     {
@@ -1908,7 +2100,7 @@ int LSM6DSLSensor::Get_Event_Status(LSM6DSL_Event_Status_t *status)
     }
   }
 
-  if(Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_SINGLE_TAP_MASK)
+  if((Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_SINGLE_TAP_MASK) || (Md2_Cfg & LSM6DSL_ACC_GYRO_INT2_SINGLE_TAP_MASK))
   {
     if((Tap_Src & LSM6DSL_ACC_GYRO_SINGLE_TAP_EV_STATUS_MASK))
     {
@@ -1916,7 +2108,7 @@ int LSM6DSLSensor::Get_Event_Status(LSM6DSL_Event_Status_t *status)
     }
   }
 
-  if(Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_TAP_MASK)
+  if((Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_TAP_MASK) || (Md2_Cfg & LSM6DSL_ACC_GYRO_INT2_TAP_MASK))
   {
     if((Tap_Src & LSM6DSL_ACC_GYRO_DOUBLE_TAP_EV_STATUS_MASK))
     {
@@ -1924,7 +2116,7 @@ int LSM6DSLSensor::Get_Event_Status(LSM6DSL_Event_Status_t *status)
     }
   }
 
-  if(Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_6D_MASK)
+  if((Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_6D_MASK) || (Md2_Cfg & LSM6DSL_ACC_GYRO_INT2_6D_MASK))
   {
     if((D6D_Src & LSM6DSL_ACC_GYRO_D6D_EV_STATUS_MASK))
     {
@@ -1932,7 +2124,7 @@ int LSM6DSLSensor::Get_Event_Status(LSM6DSL_Event_Status_t *status)
     }
   }
 
-  if(Int1_Ctrl & LSM6DSL_ACC_GYRO_INT1_PEDO_MASK)
+  if((Int1_Ctrl & LSM6DSL_ACC_GYRO_INT1_PEDO_MASK))
   {
     if((Func_Src & LSM6DSL_ACC_GYRO_PEDO_EV_STATUS_MASK))
     {
@@ -1940,7 +2132,7 @@ int LSM6DSLSensor::Get_Event_Status(LSM6DSL_Event_Status_t *status)
     }
   }
 
-  if(Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_TILT_MASK)
+  if((Md1_Cfg & LSM6DSL_ACC_GYRO_INT1_TILT_MASK) || (Md2_Cfg & LSM6DSL_ACC_GYRO_INT2_TILT_MASK))
   {
     if((Func_Src & LSM6DSL_ACC_GYRO_TILT_EV_STATUS_MASK))
     {
