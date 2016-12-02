@@ -1,9 +1,9 @@
 /**
  ******************************************************************************
  * @file    main.cpp
- * @author  AST / EST
- * @version V0.0.1
- * @date    9-August-2016
+ * @author  CLab
+ * @version V1.0.0
+ * @date    2-December-2016
  * @brief   Simple Example application for using the X_NUCLEO_IKS01A1 
  *          MEMS Inertial & Environmental Sensor Nucleo expansion board.
  ******************************************************************************
@@ -41,7 +41,7 @@
 #include "x_nucleo_iks01a2.h"
 
 /* Instantiate the expansion board */
-static X_NUCLEO_IKS01A2 *mems_expansion_board = X_NUCLEO_IKS01A2::Instance(D14, D15);
+static X_NUCLEO_IKS01A2 *mems_expansion_board = X_NUCLEO_IKS01A2::Instance(D14, D15, D4, D5);
 
 /* Retrieve the composing elements of the expansion board */
 static LSM303AGR_MAG_Sensor *magnetometer = mems_expansion_board->magnetometer;
