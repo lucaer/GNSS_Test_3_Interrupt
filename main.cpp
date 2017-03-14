@@ -38,20 +38,20 @@
 
 /* Includes */
 #include "mbed.h"
-#include "x_nucleo_iks01a2.h"
+#include "XNucleoIKS01A2.h"
 
 /* Instantiate the expansion board */
-static X_NUCLEO_IKS01A2 *mems_expansion_board = X_NUCLEO_IKS01A2::Instance(D14, D15, D4, D5);
+static XNucleoIKS01A2 *mems_expansion_board = XNucleoIKS01A2::instance(D14, D15, D4, D5);
 
 /* Retrieve the composing elements of the expansion board */
-static LSM303AGR_MAG_Sensor *magnetometer = mems_expansion_board->magnetometer;
+static LSM303AGRMagSensor *magnetometer = mems_expansion_board->magnetometer;
 static HTS221Sensor *hum_temp = mems_expansion_board->ht_sensor;
 static LPS22HBSensor *press_temp = mems_expansion_board->pt_sensor;
 static LSM6DSLSensor *acc_gyro = mems_expansion_board->acc_gyro;
-static LSM303AGR_ACC_Sensor *accelerometer = mems_expansion_board->accelerometer;
+static LSM303AGRAccSensor *accelerometer = mems_expansion_board->accelerometer;
 
 /* Helper function for printing floats & doubles */
-static char *printDouble(char* str, double v, int decimalDigits=2)
+static char *print_double(char* str, double v, int decimalDigits=2)
 {
   int i = 1;
   int intPart, fractPart;
@@ -74,7 +74,9 @@ static char *printDouble(char* str, double v, int decimalDigits=2)
 
   /* fill in leading fractional zeros */
   for (i/=10;i>1; i/=10, ptr++) {
-    if(fractPart >= i) break;
+    if (fractPart >= i) {
+      break;
+    }
     *ptr = '0';
   }
 
@@ -84,7 +86,6 @@ static char *printDouble(char* str, double v, int decimalDigits=2)
   return str;
 }
 
-
 /* Simple main function */
 int main() {
   uint8_t id;
@@ -93,49 +94,49 @@ int main() {
   int32_t axes[3];
   
   /* Enable all sensors */
-  hum_temp->Enable();
-  press_temp->Enable();
-  magnetometer->Enable();
-  accelerometer->Enable();
-  acc_gyro->Enable_X();
-  acc_gyro->Enable_G();
+  hum_temp->enable();
+  press_temp->enable();
+  magnetometer->enable();
+  accelerometer->enable();
+  acc_gyro->enable_x();
+  acc_gyro->enable_g();
   
   printf("\r\n--- Starting new run ---\r\n");
 
-  hum_temp->ReadID(&id);
+  hum_temp->read_id(&id);
   printf("HTS221  humidity & temperature    = 0x%X\r\n", id);
-  press_temp->ReadID(&id);
+  press_temp->read_id(&id);
   printf("LPS22HB  pressure & temperature   = 0x%X\r\n", id);
-  magnetometer->ReadID(&id);
+  magnetometer->read_id(&id);
   printf("LSM303AGR magnetometer            = 0x%X\r\n", id);
-  accelerometer->ReadID(&id);
+  accelerometer->read_id(&id);
   printf("LSM303AGR accelerometer           = 0x%X\r\n", id);
-  acc_gyro->ReadID(&id);
+  acc_gyro->read_id(&id);
   printf("LSM6DSL accelerometer & gyroscope = 0x%X\r\n", id);
  
   while(1) {
     printf("\r\n");
 
-    hum_temp->GetTemperature(&value1);
-    hum_temp->GetHumidity(&value2);
-    printf("HTS221: [temp] %7s C,   [hum] %s%%\r\n", printDouble(buffer1, value1), printDouble(buffer2, value2));
+    hum_temp->get_temperature(&value1);
+    hum_temp->get_humidity(&value2);
+    printf("HTS221: [temp] %7s C,   [hum] %s%%\r\n", print_double(buffer1, value1), print_double(buffer2, value2));
     
-    press_temp->GetTemperature(&value1);
-    press_temp->GetPressure(&value2);
-    printf("LPS22HB: [temp] %7s C, [press] %s mbar\r\n", printDouble(buffer1, value1), printDouble(buffer2, value2));
+    press_temp->get_temperature(&value1);
+    press_temp->get_pressure(&value2);
+    printf("LPS22HB: [temp] %7s C, [press] %s mbar\r\n", print_double(buffer1, value1), print_double(buffer2, value2));
 
     printf("---\r\n");
 
-    magnetometer->Get_M_Axes(axes);
+    magnetometer->get_m_axes(axes);
     printf("LSM303AGR [mag/mgauss]:  %6ld, %6ld, %6ld\r\n", axes[0], axes[1], axes[2]);
     
-    accelerometer->Get_X_Axes(axes);
+    accelerometer->get_x_axes(axes);
     printf("LSM303AGR [acc/mg]:  %6ld, %6ld, %6ld\r\n", axes[0], axes[1], axes[2]);
 
-    acc_gyro->Get_X_Axes(axes);
+    acc_gyro->get_x_axes(axes);
     printf("LSM6DSL [acc/mg]:      %6ld, %6ld, %6ld\r\n", axes[0], axes[1], axes[2]);
 
-    acc_gyro->Get_G_Axes(axes);
+    acc_gyro->get_g_axes(axes);
     printf("LSM6DSL [gyro/mdps]:   %6ld, %6ld, %6ld\r\n", axes[0], axes[1], axes[2]);
 
     wait(1.5);
