@@ -1,144 +1,162 @@
-/**
- ******************************************************************************
- * @file    main.cpp
- * @author  CLab
- * @version V1.0.0
- * @date    2-December-2016
- * @brief   Simple Example application for using the X_NUCLEO_IKS01A1 
- *          MEMS Inertial & Environmental Sensor Nucleo expansion board.
- ******************************************************************************
- * @attention
- *
- * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *   1. Redistributions of source code must retain the above copyright notice,
- *      this list of conditions and the following disclaimer.
- *   2. Redistributions in binary form must reproduce the above copyright notice,
- *      this list of conditions and the following disclaimer in the documentation
- *      and/or other materials provided with the distribution.
- *   3. Neither the name of STMicroelectronics nor the names of its contributors
- *      may be used to endorse or promote products derived from this software
- *      without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- ******************************************************************************
-*/ 
-
-/* Includes */
+// FUNZIONANTE
 #include "mbed.h"
 #include "XNucleoIKS01A2.h"
 
-/* Instantiate the expansion board */
+#include <stdio.h>
+#include <string.h>
+
+#define MSGSIZE 150
+
+void Rx_interrupt();
+
+DigitalOut led(LED1);
+DigitalIn btn(USER_BUTTON);
+DigitalOut rst(D7); // reset pin for GNSS
+DigitalOut wkp(D13); // wake up pin for GNSS
+DigitalIn pps(D6); // To start a new timer every time the GNSS provide a signal of new second connected whit RED LED of GNSS
+
+Serial gnss(D8,D2,230400);
+Serial pc(USBTX,USBRX,921600);
+
+// To have a correct time step period
+Timer tim; // Start each time a new measurement is received
+Timer tim2; // Start without resetting
+
+
+
+// Instantiate the expansion board
+// Define static variable (non cambia during program execution) that point to a our pointer
+// D4 & D5 additional Pins, D14 & D15 for I2C
 static XNucleoIKS01A2 *mems_expansion_board = XNucleoIKS01A2::instance(D14, D15, D4, D5);
 
-/* Retrieve the composing elements of the expansion board */
-static LSM303AGRMagSensor *magnetometer = mems_expansion_board->magnetometer;
-static HTS221Sensor *hum_temp = mems_expansion_board->ht_sensor;
-static LPS22HBSensor *press_temp = mems_expansion_board->pt_sensor;
+
+// Retrieve the composing elements of the expansion board (iNEMO) we want to use
+//static LSM303AGRMagSensor *magnetometer = mems_expansion_board->magnetometer;
 static LSM6DSLSensor *acc_gyro = mems_expansion_board->acc_gyro;
-static LSM303AGRAccSensor *accelerometer = mems_expansion_board->accelerometer;
+//static LPS22HBSensor *press_temp = mems_expansion_board->pt_sensor;
 
-/* Helper function for printing floats & doubles */
-static char *print_double(char* str, double v, int decimalDigits=2)
-{
-  int i = 1;
-  int intPart, fractPart;
-  int len;
-  char *ptr;
+int16_t xRaw[3], gRaw[3];
+//float sX, sG;
 
-  /* prepare decimal digits multiplicator */
-  for (;decimalDigits!=0; i*=10, decimalDigits--);
+char carat;
+char buffer[MSGSIZE]; // To collect all the msg
+char bufferRX[MSGSIZE]; // To save only the usefull msg
+char msg[]="$PSTMPV"; // Header of the message i need
 
-  /* calculate integer & fractinal parts */
-  intPart = (int)v;
-  fractPart = (int)((v-(double)(int)v)*i);
+uint8_t i,lenght;
+int8_t res;
 
-  /* fill in integer part */
-  sprintf(str, "%i.", intPart);
+bool firstTime = true; // First time that i fill the buffer to erase the previouse buffer
+bool rcvdMsg = false; // To send the msg at the end of the ISR
+uint8_t cnt = 0, cntRx;
 
-  /* prepare fill in of fractional part */
-  len = strlen(str);
-  ptr = &str[len];
+// Define the union
+union MYFLOAT {
+    float time;
+    uint8_t byte[4];
+} stamp;
 
-  /* fill in leading fractional zeros */
-  for (i/=10;i>1; i/=10, ptr++) {
-    if (fractPart >= i) {
-      break;
+
+union MYINT16 {
+    uint16_t data;
+    uint8_t byte[2];
+} app;
+
+
+
+int main(){
+    pc.printf("Programma del GNSS \r\n");
+    acc_gyro -> enable_x();
+    acc_gyro -> enable_g();
+    rst.write(1);
+    //acc_gyro -> get_x_sensitivity(&sX);
+    //acc_gyro -> get_g_sensitivity(&sG);
+    // To sincronize with matlab
+    while(pc.getc()!='k');
+    tim.start(); // Start timer for sample rate
+    tim2.start(); // Start timer for acquisition time
+    // To know the rising edge of the transmission acquisition time thanks to the GNSS LED
+    while(!pps);
+    while(pps);
+    while(!pps);
+    tim2.reset();
+    // This is the interrupt routine call
+    // Is the link between the function interrupt and the main when RxIrq is received
+    // This happen when a new character is received on the serial port
+    gnss.attach(&Rx_interrupt, Serial::RxIrq);
+    //wkp.write(1);
+    while(1){
+        tim.reset();
+        acc_gyro->get_x_axes_raw(xRaw);
+        acc_gyro->get_g_axes_raw(gRaw);
+        stamp.time = tim2.read(); // To get the timestamp
+        // Each acquisition i get 3 information
+
+        // Sampling Instant
+        pc.putc('T');
+        for(int i=0;i<4;i++){
+            pc.putc(stamp.byte[i]);
+        }
+
+        // Three value for acceleration x,y,z
+        pc.putc('A');
+        for(int i=0;i<3;i++){
+            app.data = xRaw[i];
+            pc.putc(app.byte[0]);
+            pc.putc(app.byte[1]);
+        }
+
+        // Three value for angular rate 
+        pc.putc('W');
+        for(int i=0;i<3;i++){
+            app.data = gRaw[i];
+            pc.putc(app.byte[0]);
+            pc.putc(app.byte[1]);
+        }
+
+        // Chech if there is a GNSS msg
+        if(rcvdMsg){
+            for(int i=0; i<cntRx; i++){
+                pc.putc(bufferRX[i]);
+            }
+            rcvdMsg = false;
+        }
+
+        // Because of the delay for a new sampling
+        double time = tim.read();
+        if(time<0.01){
+            wait(0.01 - time);
+        }
     }
-    *ptr = '0';
-  }
-
-  /* fill in (rest of) fractional part */
-  sprintf(ptr, "%i", fractPart);
-
-  return str;
+return 0;
 }
 
-/* Simple main function */
-int main() {
-  uint8_t id;
-  float value1, value2;
-  char buffer1[32], buffer2[32];
-  int32_t axes[3];
-  
-  /* Enable all sensors */
-  hum_temp->enable();
-  press_temp->enable();
-  magnetometer->enable();
-  accelerometer->enable();
-  acc_gyro->enable_x();
-  acc_gyro->enable_g();
-  
-  printf("\r\n--- Starting new run ---\r\n");
-
-  hum_temp->read_id(&id);
-  printf("HTS221  humidity & temperature    = 0x%X\r\n", id);
-  press_temp->read_id(&id);
-  printf("LPS22HB  pressure & temperature   = 0x%X\r\n", id);
-  magnetometer->read_id(&id);
-  printf("LSM303AGR magnetometer            = 0x%X\r\n", id);
-  accelerometer->read_id(&id);
-  printf("LSM303AGR accelerometer           = 0x%X\r\n", id);
-  acc_gyro->read_id(&id);
-  printf("LSM6DSL accelerometer & gyroscope = 0x%X\r\n", id);
- 
-  while(1) {
-    printf("\r\n");
-
-    hum_temp->get_temperature(&value1);
-    hum_temp->get_humidity(&value2);
-    printf("HTS221: [temp] %7s C,   [hum] %s%%\r\n", print_double(buffer1, value1), print_double(buffer2, value2));
-    
-    press_temp->get_temperature(&value1);
-    press_temp->get_pressure(&value2);
-    printf("LPS22HB: [temp] %7s C, [press] %s mbar\r\n", print_double(buffer1, value1), print_double(buffer2, value2));
-
-    printf("---\r\n");
-
-    magnetometer->get_m_axes(axes);
-    printf("LSM303AGR [mag/mgauss]:  %6ld, %6ld, %6ld\r\n", axes[0], axes[1], axes[2]);
-    
-    accelerometer->get_x_axes(axes);
-    printf("LSM303AGR [acc/mg]:  %6ld, %6ld, %6ld\r\n", axes[0], axes[1], axes[2]);
-
-    acc_gyro->get_x_axes(axes);
-    printf("LSM6DSL [acc/mg]:      %6ld, %6ld, %6ld\r\n", axes[0], axes[1], axes[2]);
-
-    acc_gyro->get_g_axes(axes);
-    printf("LSM6DSL [gyro/mdps]:   %6ld, %6ld, %6ld\r\n", axes[0], axes[1], axes[2]);
-
-    wait(1.5);
-  }
-}
+void Rx_interrupt(){
+    led = 1;
+    // If first time i execute the ISR i have to erase the buffer
+    if (firstTime){
+        memset(buffer,0,MSGSIZE); // Set the value of 0 to all the byte
+        firstTime = false;
+    }
+    carat = gnss.getc(); // Take a character from GNSS
+    // If is different from Line Feed, put it in the buffer and this char is '$'
+    if(carat != 10){
+        buffer[cnt++] = carat;
+        // Else put it in buffer as last value and compare the content of buffer
+        // With the header i'm interested in
+        // If the result is correct
+    }else{
+        buffer[cnt] = carat;
+        res = memcmp(buffer,msg,sizeof(msg));
+        if(res == 1){
+            rcvdMsg = true;
+            // Copy the received buffer into bufferRX which is the one to go to the pc
+            memcpy(bufferRX,buffer,cnt+1);
+            cntRx = cnt+1; // Save the value of counter
+        }
+        firstTime = true;
+        cnt = 0;
+    }
+    led = 0;
+    return;
+};
